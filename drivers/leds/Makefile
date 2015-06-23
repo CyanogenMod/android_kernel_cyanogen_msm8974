@@ -19,7 +19,11 @@ obj-$(CONFIG_LEDS_COBALT_RAQ)		+= leds-cobalt-raq.o
 obj-$(CONFIG_LEDS_SUNFIRE)		+= leds-sunfire.o
 obj-$(CONFIG_LEDS_PCA9532)		+= leds-pca9532.o
 obj-$(CONFIG_LEDS_PM8XXX)		+= leds-pm8xxx.o
+ifeq ($(CONFIG_MACH_SHENQI_K9),y)
+obj-$(CONFIG_MACH_SHENQI_K9)		+= leds-qpnp-shenqi-k9.o
+else
 obj-$(CONFIG_LEDS_QPNP)			+= leds-qpnp.o
+endif
 obj-$(CONFIG_LEDS_GPIO_REGISTER)	+= leds-gpio-register.o
 obj-$(CONFIG_LEDS_GPIO)			+= leds-gpio.o
 obj-$(CONFIG_LEDS_LP3944)		+= leds-lp3944.o

@@ -1,0 +1,66 @@
+/*
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9968000 {
+		bma2x2@10 {
+			status = "okay";
+			reg = <0x10>;
+			compatible = "bosch,bma2x2";
+			label = "acc";
+			interrupt-parent = <&msmgpio>;
+			interrupts = <79>;
+			vdd-supply = <&pm8941_l18>;
+			vcc_i2c-supply = <&pm8941_lvs1>;
+			bma2x2,drdy-gpio = <&msmgpio 79 0x00>;
+			bma2x2,irq-gpio = <&msmgpio 67 0x00>;
+		};
+
+		bmm050@12 {
+			status = "okay";
+			reg = <0x12>;
+			compatible = "bosch,bmm050";
+			label = "mag";
+			interrupt-parent = <&msmgpio>;
+			interrupts = <79>;
+			vdd-supply = <&pm8941_l18>;
+			vcc_i2c-supply = <&pm8941_lvs1>;
+			bmm050,drdy-gpio = <&msmgpio 79 0x00>;
+			bmm050,irq-gpio = <&msmgpio 67 0x00>;
+		};
+
+		bmg160@68 {
+			status = "okay";
+			reg = <0x68>;
+			compatible = "bosch,bmg160";
+			label = "gyro";
+			interrupt-parent = <&msmgpio>;
+			interrupts = <66>;
+			vdd-supply = <&pm8941_l18>;
+			vcc_i2c-supply = <&pm8941_lvs1>;
+			bmg160,irq-gpio = <&msmgpio 66 0x00>;
+		};
+	};
+
+	i2c@f9925000 {
+		ap3426@1e {
+			compatible = "dyna,ap3426";
+			reg = <0x1e>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <68 0x2>;
+			irq-gpio = <&msmgpio 68 0x00>;
+			vdd-supply = <&pm8941_l18>;
+			vcc_i2c-supply = <&pm8941_lvs1>;
+		};
+	};
+};

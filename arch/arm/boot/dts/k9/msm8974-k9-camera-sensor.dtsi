@@ -1,0 +1,197 @@
+/*
+ * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	led_flash0: qcom,camera-led-flash {
+		cell-index = <0>;
+		compatible = "qcom,camera-led-flash";
+		qcom,flash-type = <1>;
+		qcom,torch-source = <&pm8941_torch0 &pm8941_torch1>;
+		qcom,flash-source = <&pm8941_flash0 &pm8941_flash1>;
+	};
+};
+
+&cci {
+	actuator0: qcom,actuator@1c {
+		cell-index = <0>;
+		reg = <0x1c>;
+		compatible = "qcom,actuator";
+		qcom,cci-master = <0>;
+	};
+
+	eeprom0: qcom,eeprom@a0 {
+		cell-index = <0>;
+		reg = <0xa0 0x0>;
+		qcom,eeprom-name = "onsemi";
+		compatible = "qcom,eeprom";
+		qcom,slave-addr = <0xa0>;
+		qcom,cci-master = <0>;
+		qcom,num-blocks = <2>;
+
+		qcom,page0 = <0 0x0 1 0x0 1 20>;
+		qcom,poll0 = <0 0x0 1 0x0 1 20>;
+		qcom,mem0 = <897 0x00 2 0x0 1 0>;
+		qcom,page1 = <0 0x0 1 0x0 1 20>;
+		qcom,poll1 = <0 0x0 1 0x0 1 20>;
+		qcom,mem1 = <41 0x900 2 0x0 1 0>;
+
+
+		cam_vdig-supply = <&pm8941_s1>;  //1.3 //1.4
+		cam_vana-supply = <&pm8941_l17>; //2.85
+		cam_vio-supply = <&pm8941_lvs2>; //1.8
+		qcom,cam-vreg-name = "cam_vdig", "cam_vio", "cam_vana";
+		qcom,cam-vreg-type = <0 1 0>;
+		qcom,cam-vreg-min-voltage = <1400000 0 2850000 >;
+		qcom,cam-vreg-max-voltage = <1400000 0 2850000 >;
+		qcom,cam-vreg-op-mode = <105000 0 80000 >;
+		qcom,gpio-no-mux = <0>;
+
+
+        gpios = <&msmgpio 54 0>; //RCAM_PON
+		qcom,gpio-vdig =<0>;
+		qcom,gpio-req-tbl-num = <0>;
+		qcom,gpio-req-tbl-flags = <0>;
+		qcom,gpio-req-tbl-label = "CAM_VDIG";
+
+		qcom,cam-power-seq-type = "sensor_vreg", "sensor_gpio",
+					"sensor_vreg", "sensor_vreg";
+		qcom,cam-power-seq-val = "cam_vdig", "sensor_gpio_vdig",
+					"cam_vio", "cam_vana";
+		qcom,cam-power-seq-cfg-val = <1 1 1 1>;
+		qcom,cam-power-seq-delay = <1 1 1 1>;
+
+	};
+
+	eeprom1: qcom,eeprom@a8 {
+		cell-index = <1>;
+		reg = <0xa8 0x0>;
+		qcom,eeprom-name = "ov8865";
+		compatible = "qcom,eeprom";
+		qcom,slave-addr = <0xa0>;
+		qcom,cci-master = <1>;
+		qcom,num-blocks = <4>;
+
+		qcom,page0 = <0 0x0 1 0x0 1 20>;
+		qcom,poll0 = <0 0x0 1 0x0 1 20>;
+		qcom,saddr0 = <0xa8>;
+		qcom,mem0 = <256 0x00 1 0x0 1 0>;
+		qcom,page1 = <0 0x0 1 0x0 1 20>;
+		qcom,poll1 = <0 0x0 1 0x0 1 20>;
+		qcom,saddr1 = <0xaa>;
+		qcom,mem1 = <256 0x00 1 0x0 1 0>;
+		qcom,page2 = <0 0x0 1 0x0 1 20>;
+		qcom,poll2 = <0 0x0 1 0x0 1 20>;
+		qcom,saddr2 = <0xac>;
+		qcom,mem2 = <256 0x00 1 0x0 1 0>;
+		qcom,page3 = <0 0x0 1 0x0 1 20>;
+		qcom,poll3 = <0 0x0 1 0x0 1 20>;
+		qcom,saddr3 = <0xae>;
+		qcom,mem3 = <129 0x00 1 0x0 1 0>;
+
+		cam_vdig-supply = <&pm8941_l3>;  //1.2
+		cam_vana-supply = <&pm8941_l17>; //2.85
+		cam_vio-supply = <&pm8941_lvs2>; //1.8
+		qcom,cam-vreg-name = "cam_vdig", "cam_vana", "cam_vio";
+		qcom,cam-vreg-type = <0 0 1>;
+		qcom,cam-vreg-min-voltage = <1200000 2850000 0>;
+		qcom,cam-vreg-max-voltage = <1200000 2850000 0>;
+		qcom,cam-vreg-op-mode = <105000 80000 0>;
+		qcom,gpio-no-mux = <0>;
+
+		qcom,cam-power-seq-type = "sensor_vreg", "sensor_vreg", "sensor_vreg";
+		qcom,cam-power-seq-val = "cam_vio", "cam_vana", "cam_vdig";
+		qcom,cam-power-seq-cfg-val = <1 1 1>;
+		qcom,cam-power-seq-delay = <1 1 1>;
+
+	};
+
+	qcom,camera@0 {
+		cell-index = <0>;
+		compatible = "qcom,camera";
+		reg = <0x0>;
+		qcom,csiphy-sd-index = <0>;
+		qcom,csid-sd-index = <0>;
+		qcom,mount-angle = <90>;
+		qcom,actuator-src = <&actuator0>;
+		qcom,led-flash-src = <&led_flash0>;
+		qcom,eeprom-src = <&eeprom0>;
+		cam_vdig-supply = <&pm8941_s1>;  //1.3
+		cam_vana-supply = <&pm8941_l17>; //2.85
+		cam_vio-supply = <&pm8941_lvs2>; //1.8
+		qcom,cam-vreg-name = "cam_vdig", "cam_vio", "cam_vana";
+		qcom,cam-vreg-type = <0 1 0 0>;
+		qcom,cam-vreg-min-voltage = <1400000 0 2850000>;
+		qcom,cam-vreg-max-voltage = <1400000 0 2850000>;
+		qcom,cam-vreg-op-mode = <105000 0 80000>;
+		qcom,gpio-no-mux = <0>;
+
+
+		gpios = <&msmgpio 15 0>, //MCLK
+			<&msmgpio 90 0>,  //RST
+			<&msmgpio 54 0>, //RCAM_PON
+			<&msmgpio 30 0>;  //gpio-vaf
+		qcom,gpio-reset = <1>;
+		qcom,gpio-vdig =<2>;
+		qcom,gpio-vaf =<3>;
+		qcom,gpio-req-tbl-num = <0 1 2 3>;
+		qcom,gpio-req-tbl-flags = <1 0 0 0>;
+		qcom,gpio-req-tbl-label = "CAMIF_MCLK0",
+					"CAM_RESET0",
+					"CAM_VDIG0",
+					"CAM_VAF0";
+		qcom,gpio-set-tbl-num = <0 1 2 3>;
+		qcom,gpio-set-tbl-flags = <1 0 0 0>;
+		qcom,gpio-set-tbl-delay = <1000 30000 30000 30000>;
+
+
+
+		qcom,sensor-position = <0>;
+		qcom,sensor-mode = <1>;
+
+		qcom,cci-master = <0>;
+		status = "ok";
+	};
+
+	qcom,camera@2 {
+		cell-index = <2>;
+		compatible = "qcom,camera";
+		reg = <0x02>;
+		qcom,csiphy-sd-index = <2>;
+		qcom,csid-sd-index = <2>;
+		qcom,mount-angle = <270>;
+		qcom,eeprom-src = <&eeprom1>;
+		cam_vdig-supply = <&pm8941_l3>;  //1.2
+		cam_vana-supply = <&pm8941_l17>; //2.85
+		cam_vio-supply = <&pm8941_lvs2>; //1.8
+		qcom,cam-vreg-name = "cam_vdig", "cam_vana", "cam_vio";
+		qcom,cam-vreg-type = <0 0 1>;
+		qcom,cam-vreg-min-voltage = <1200000 2850000 0>;
+		qcom,cam-vreg-max-voltage = <1200000 2850000 0>;
+		qcom,cam-vreg-op-mode = <105000 80000 0>;
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 17 0>, //MCLK
+			<&msmgpio 91 0>;    //RST
+
+		qcom,gpio-reset = <1>;
+
+		qcom,gpio-req-tbl-num = <0 1>;
+		qcom,gpio-req-tbl-flags = <1 0>;
+		qcom,gpio-req-tbl-label = "CAMIF_MCLK2",
+					  "CAM_RESET2";
+
+		qcom,sensor-position = <1>;
+		qcom,sensor-mode = <1>;
+		qcom,cci-master = <1>;
+		status = "ok";
+	};
+};

@@ -1,0 +1,47 @@
+/*
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9964000 {
+		cc_logic@01 {
+			compatible = "typec,cclogic";
+			reg = <0x01>;
+			vcc_i2c-supply = <&pm8941_s3>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <73>;
+			cc_logic,irq-gpio = <&msmgpio 73 0x02>; //for 0x8 low_level interrupt, 0x2 falling_edge
+			/* cc_logic,function-switch-gpio1 = <&msmgpio 32 0x00>; */
+			cc_logic,function-switch-gpio2 = <&msmgpio 31 0x00>;
+			cc_logic,usb-ss-gpio = <&msmgpio 53 0x00>;
+			/* cc_logic,power-control = <&msmgpio 34 0x00>; */
+			cc_logic,i2c-pull-up;
+
+			cclogic,chip1 {
+				chip-name = "pericom,pi5usb30216";
+				chip-address = <0x1d>;
+			};
+			cclogic,chip2 {
+				chip-name = "ti,tusb320";
+				chip-address = <0x60>;
+			};
+		};
+	};
+};
+
+&usb_otg {
+  qcom,hsusb-otg-otg-control = <2>;
+};
+
+&usb3 {
+  qcom,otg-capability;
+};

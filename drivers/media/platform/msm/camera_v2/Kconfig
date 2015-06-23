@@ -7,6 +7,12 @@ config MSM_CAMERA_SENSOR
           data for camera support. The driver support V4L2
           subdev APIs.
 
+config MSM_CAMERA_SENSOR_RHM_OIS_ACTUATOR
+	    bool "RHM OIS Support"
+	    depends on MSMB_CAMERA
+        ---help---
+          This flag enables support for the RHM OIS actuator.
+
 config MSM_CPP
         bool "Qualcomm MSM Camera Post Processing Engine support"
         depends on MSMB_CAMERA

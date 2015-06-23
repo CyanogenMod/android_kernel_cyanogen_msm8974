@@ -1,0 +1,100 @@
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	qcom,msm-dai-mi2s {
+		qcom,msm-dai-q6-mi2s-quat {
+			qcom,msm-mi2s-rx-lines = <2>;
+			qcom,msm-mi2s-tx-lines = <1>;
+		};
+	};
+
+	i2c@f9923000 {
+		/delete-property/ status;
+
+		tfa9890@34 {
+			compatible = "nxp,tfa9890";
+			reg = <0x34>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <46 0x2>;
+			irq-gpio = <&msmgpio 46 0x00>;
+			reset-gpio = <&msmgpio 0 0x00>;
+			reset-gpio-test = <&msmgpio 2 0x00>;
+			vdd-supply = <&pm8941_s3>;
+			vcc_i2c-supply = <&pm8941_lvs1>;
+			tfa9890,i2c-pull-up;
+			tfa9890,power-down;
+		};
+	};
+
+	sound {
+		qcom,model = "msm8974-taiko-mtp-snd-card";
+
+		reg = <0xfe02c000 0x4>,
+				<0xfe02d000 0x4>,
+				<0xfe02e000 0x4>,
+				<0xfe02f000 0x4>;
+
+		qcom,audio-routing = 
+			"RX_BIAS", "MCLK",
+			"LDO_H", "MCLK",
+			"AIF4 MAD", "MCLK",
+
+			"AMIC1", "MIC BIAS1 External",
+			"MIC BIAS1 External", "Handset Mic",
+			"AMIC2", "MIC BIAS2 External",
+			"MIC BIAS2 External", "Headset Mic",
+			"AMIC3", "MIC BIAS3 External",
+			"MIC BIAS3 External", "DUAL Rear Mic",
+			"AMIC4", "MIC BIAS4 External",
+			"MIC BIAS4 External", "ANC Front Mic",
+
+			"DMIC1", "MIC BIAS1 External",
+			"MIC BIAS1 External", "Handset Mic",
+			"DMIC5", "MIC BIAS4 External",
+			"MIC BIAS4 External", "ANC Front Mic",
+			"DMIC3", "MIC BIAS3 External",
+			"MIC BIAS3 External", "DUAL Rear Mic",
+
+			"DMIC1", "MIC BIAS1 External",
+			"MIC BIAS1 External", "Digital Mic1",
+			"DMIC2", "MIC BIAS1 External",
+			"MIC BIAS1 External", "Digital Mic2",
+			"DMIC3", "MIC BIAS3 External",
+			"MIC BIAS3 External", "Digital Mic3",
+			"DMIC4", "MIC BIAS3 External",
+			"MIC BIAS3 External", "Digital Mic4",
+			"DMIC5", "MIC BIAS4 External",
+			"MIC BIAS4 External", "Digital Mic5",
+			"DMIC6", "MIC BIAS4 External",
+			"MIC BIAS4 External", "Digital Mic6";
+
+		/delete-property/ qcom,prim-auxpcm-gpio-clk;
+		/delete-property/ qcom,sec-auxpcm-gpio-sync;
+		qcom,us-euro-gpios = <&pm8941_gpios 20 0>;
+		qcom,cdc-micbias2-headset-only;
+		qcom,mbhc-audio-jack-type = "4-pole-jack";
+	};
+};
+
+&slim_msm {
+	taiko_codec {
+		qcom,cdc-micbias2-ext-cap;
+		cdc-vdd-spkdrv-supply = <&pm8941_boost>;
+		qcom,cdc-vdd-spkdrv-voltage = <5000000 5000000>;
+		qcom,cdc-vdd-spkdrv-current = <1250000>;
+		qcom,cdc-on-demand-supplies = "cdc-vdd-spkdrv";
+		qcom,cdc-micbias-cfilt3-mv = <1800>;
+		qcom,cdc-dmic-sample-rate = <2400000>;
+	};
+};
+

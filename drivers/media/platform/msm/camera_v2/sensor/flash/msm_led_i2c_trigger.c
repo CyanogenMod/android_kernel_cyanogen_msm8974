@@ -49,6 +49,9 @@ int32_t msm_led_i2c_trigger_config(struct msm_led_flash_ctrl_t *fctrl,
 	void *data)
 {
 	int rc = 0;
+#ifdef CONFIG_MACH_SHENQI_K9
+	int i = 0;
+#endif
 	struct msm_camera_led_cfg_t *cfg = (struct msm_camera_led_cfg_t *)data;
 	CDBG("called led_state %d\n", cfg->cfgtype);
 
@@ -61,6 +64,12 @@ int32_t msm_led_i2c_trigger_config(struct msm_led_flash_ctrl_t *fctrl,
 	case MSM_CAMERA_LED_INIT:
 		if (fctrl->func_tbl->flash_led_init)
 			rc = fctrl->func_tbl->flash_led_init(fctrl);
+#ifdef CONFIG_MACH_SHENQI_K9
+		for (i = 0; i < MAX_LED_TRIGGERS; i++) {
+			cfg->torch_current[i] =
+				fctrl->torch_max_current[i];
+		}
+#endif
 		break;
 
 	case MSM_CAMERA_LED_RELEASE:

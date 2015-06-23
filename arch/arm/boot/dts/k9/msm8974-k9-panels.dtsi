@@ -1,0 +1,3 @@
+/include/ "panels/dsi-panel-boe-1080p-video.dtsi"
+/include/ "panels/dsi-panel-cmi-1080p-video.dtsi"
+/include/ "panels/dsi-panel-tianma-1080p-video.dtsi"

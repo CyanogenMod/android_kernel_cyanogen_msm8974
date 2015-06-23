@@ -25,6 +25,30 @@
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
 #endif
 
+#ifdef CONFIG_MACH_SHENQI_K9
+#define E2PROM_ONSEMI "onsemi"
+#define E2PROM_OV8865 "ov8865"
+
+#define IS_E2PROM_ONSEMI(x) if (!strcmp(x, E2PROM_ONSEMI))
+#define IS_E2PROM_OV8865(x) if (!strcmp(x, E2PROM_OV8865))
+
+extern int FadjDat_Lenovo( uint8_t * ois_data);
+uint8_t is_3a_checksumed = 0;
+uint8_t is_ois_checksumed = 0;
+/*  +end*/
+#define EEPROM_OIS_OFFSET  (897)
+#define MAX_EEPROM_COUNT (3)
+#define SENSOR_MODULE_ID_MAP_COUNT (4)
+#define SUPPLIER_ID_OFFSET  (0x000B)
+#define SENSOR_ID_OFFSET  (0x000C)
+struct msm_eeprom_id_t g_eeprom_id_table[MAX_EEPROM_COUNT];
+struct msm_sensor_module_id_name_map g_sensor_module_id_name_map[SENSOR_MODULE_ID_MAP_COUNT] = {
+	{0x07, 0x0D, "imx214"},  //ofilm imx214
+	{0x05, 0x0D, "imx214_lg"},  //LGIT imx214
+	{0x07, 0x08, "ov8865_q8v18a"},  //ofilm ov8865
+	{0x01, 0x08, "ov8865_sunny"},  //sunny ov8865
+};
+#endif
 DEFINE_MSM_MUTEX(msm_eeprom_mutex);
 
 
@@ -904,12 +928,151 @@ static int msm_eeprom_spi_remove(struct spi_device *sdev)
 	return 0;
 }
 
+#ifdef CONFIG_MACH_SHENQI_K9
+static int msm_eeprom_fancymaker_checksum(struct msm_eeprom_ctrl_t *e_ctrl )
+{
+
+	int32_t data_index;
+	int32_t data_3a_sum = 0;
+	int32_t data_ois_sum = 0;
+
+	int32_t sensor_3a_begin_offset = 0;
+	int32_t  sensor_3a_end_offset = 894;
+	int32_t  sensor_3a_checksum_hi_offset = 895;
+	int32_t sensor_3a_checksum_low_offset = 896;
+	int32_t ois_begin_offset = 897;
+	int32_t ois_end_offset = 935;
+	int32_t ois_checksum_hi_offset = 936;
+	int32_t ois_checksum_low_offset = 937;
+	for(data_index=sensor_3a_begin_offset; data_index <= sensor_3a_end_offset; data_index++) {
+		data_3a_sum = data_3a_sum+e_ctrl->cal_data.mapdata[data_index];
+	}
+	CDBG("%s: data_3a_sum = 0x%x  temp_data=0x%x 0x%x\n",__func__,data_3a_sum,(*(e_ctrl->cal_data.mapdata+sensor_3a_checksum_hi_offset)),(*(e_ctrl->cal_data.mapdata+sensor_3a_checksum_low_offset)));
+	if((data_3a_sum&0xffff)==(((*(e_ctrl->cal_data.mapdata+sensor_3a_checksum_hi_offset))<<8)|(*(e_ctrl->cal_data.mapdata+sensor_3a_checksum_low_offset)))) {
+		pr_err("%s: data_3a_sum data success!  \n",__func__);
+		is_3a_checksumed = 1;
+	}
+	else {
+		pr_err("%s: data_3a_sum data fail! \n",__func__);
+		is_3a_checksumed = 0;
+	}
+
+	for(data_index=ois_begin_offset; data_index <= ois_end_offset; data_index++) {
+		data_ois_sum = data_ois_sum+e_ctrl->cal_data.mapdata[data_index];
+	}
+	CDBG("%s: data_ois_sum = 0x%x  temp_data=0x%x 0x%x\n",__func__,data_ois_sum,(*(e_ctrl->cal_data.mapdata+ois_checksum_hi_offset)),(*(e_ctrl->cal_data.mapdata+ois_checksum_low_offset)));
+	if((data_ois_sum&0xffff)==(((*(e_ctrl->cal_data.mapdata+ois_checksum_hi_offset))<<8)|(*(e_ctrl->cal_data.mapdata+ois_checksum_low_offset)))) {
+		pr_err("%s: data_ois_sum data success!\n",__func__);
+		is_ois_checksumed = 1;
+	} else {
+		pr_err("%s: data_ois_sum data fail!\n",__func__);
+		is_ois_checksumed = 0;
+	}
+	if(is_3a_checksumed && is_ois_checksumed )
+		return 0;
+	else
+		return -1;
+
+}
+
+static int msm_eeprom_fancymaker_checksum_no_ois(struct msm_eeprom_ctrl_t *e_ctrl)
+{
+
+	int32_t data_index;
+	int32_t data_3a_sum = 0;
+	int32_t sensor_3a_begin_offset = 0;
+	int32_t  sensor_3a_end_offset = 894;
+	int32_t  sensor_3a_checksum_hi_offset = 895;
+	int32_t sensor_3a_checksum_low_offset = 896;
+
+	for(data_index=sensor_3a_begin_offset; data_index <= sensor_3a_end_offset; data_index++) {
+		data_3a_sum = data_3a_sum+e_ctrl->cal_data.mapdata[data_index];
+	}
+	CDBG("%s: data_3a_sum = 0x%x  temp_data=0x%x 0x%x\n",__func__,data_3a_sum,(*(e_ctrl->cal_data.mapdata+sensor_3a_checksum_hi_offset)),(*(e_ctrl->cal_data.mapdata+sensor_3a_checksum_low_offset)));
+	if((data_3a_sum&0xffff)==(((*(e_ctrl->cal_data.mapdata+sensor_3a_checksum_hi_offset))<<8)|(*(e_ctrl->cal_data.mapdata+sensor_3a_checksum_low_offset)))) {
+		pr_err("%s: data_3a_sum data success!  \n",__func__);
+		is_3a_checksumed = 1;
+	}
+	else {
+		pr_err("%s: data_3a_sum data fail! \n",__func__);
+		is_3a_checksumed = 0;
+	}
+
+
+	if(is_3a_checksumed )
+		return 0;
+	else
+		return -1;
+
+}
+static void msm_eeprom_fancymaker_fill_id_table(struct msm_eeprom_ctrl_t *e_ctrl, const char * eeprom_name)
+{
+       static int32_t id_index = 0;
+	if(id_index < MAX_EEPROM_COUNT) {
+		g_eeprom_id_table[id_index].supplier_id = e_ctrl->cal_data.mapdata[SUPPLIER_ID_OFFSET];
+		g_eeprom_id_table[id_index].sensor_id = e_ctrl->cal_data.mapdata[SENSOR_ID_OFFSET];
+		g_eeprom_id_table[id_index].eeprom_name = eeprom_name;
+		CDBG("fill_id_table id_index%d, supplier_id 0x%x,sensor_id 0x%x,eeprom_name:%s\n", id_index, g_eeprom_id_table[id_index].supplier_id, g_eeprom_id_table[id_index].sensor_id ,g_eeprom_id_table[id_index].eeprom_name);
+		id_index ++;
+	}
+
+}
+
+ int msm_eeprom_fancymaker_check_sensor_module_id(const char * sensor_name, const char * eeprom_name)
+{
+	 int32_t  i = 0 ;
+	 int32_t j = 0;
+	 struct msm_eeprom_id_t * p_eeprom_id = NULL;
+	 const char *sensor_module_name = NULL;
+	CDBG("check_sensor_module_id sensor_name:%s, eeprom_name:%s\n",  sensor_name, eeprom_name);
+	 //get sensor id && supplier id stored in eeprom by eeprom name
+	 for (i = 0; i< MAX_EEPROM_COUNT; i++) {
+		if(g_eeprom_id_table[i].eeprom_name == NULL || eeprom_name == NULL)
+			continue;
+		if (strcmp(eeprom_name,g_eeprom_id_table[i].eeprom_name ) == 0){
+			p_eeprom_id = &g_eeprom_id_table[i];
+			break;
+		}
+	 }
+	if (p_eeprom_id != NULL) {
+		//get sensor module name by sensor_id && supplier id
+		for (j = 0; j< SENSOR_MODULE_ID_MAP_COUNT; j++) {
+			if (p_eeprom_id->sensor_id ==  g_sensor_module_id_name_map[j].sensor_id
+				&& p_eeprom_id->supplier_id == g_sensor_module_id_name_map[j].supplier_id){
+				sensor_module_name = g_sensor_module_id_name_map[j].sensor_module_name;
+					break;
+			}
+		}
+		 CDBG("check_sensor_id i %d, j 0x%x,supplier_id 0x%x, 0x%x\n", i, j,  g_eeprom_id_table[i ].supplier_id, g_sensor_module_id_name_map[j].supplier_id);
+
+		 if(sensor_module_name != NULL) {
+			if(strcmp(sensor_module_name,sensor_name) == 0)
+				return 0;
+			else
+				return -1;
+		 } else {
+			pr_err("check_sensor_module_id, not found sensor_module_name, sensor_name:%s, eeprom_name:%s,sensor_id:%d,supplier_id:%d\n",
+				sensor_name,  eeprom_name, p_eeprom_id->sensor_id, p_eeprom_id->supplier_id);
+			return 0; //not found sensor_module_name. maybe eeprom data corrupt. so not need check module id
+		 }
+	}else{
+		pr_err("check_sensor_module_id, not found eeprom, sensor_name:%s, eeprom_name:%s\n",  sensor_name, eeprom_name);
+		return 0; // don't need check sensor_module_id, because no eeprom data
+	}
+
+ }
+#endif
+
 static int msm_eeprom_platform_probe(struct platform_device *pdev)
 {
 	int rc = 0;
 	int j = 0;
 	uint32_t temp;
-
+#ifdef CONFIG_MACH_SHENQI_K9
+	int32_t loop = 0;
+	int32_t need_retry = 0;
+	int32_t is_have_ois = 0;
+#endif
 	struct msm_camera_cci_client *cci_client = NULL;
 	struct msm_eeprom_ctrl_t *e_ctrl = NULL;
 	struct msm_eeprom_board_info *eb_info = NULL;
@@ -1022,16 +1185,59 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 		pr_err("failed rc %d\n", rc);
 		goto memdata_free;
 	}
+
+#ifdef CONFIG_MACH_SHENQI_K9
+	IS_E2PROM_ONSEMI(eb_info->eeprom_name) {
+		is_have_ois = 1;
+	}
+	is_3a_checksumed = 0;
+	is_ois_checksumed = 0;
+	do{
+
+		need_retry = 0;
+		rc = read_eeprom_memory(e_ctrl, &e_ctrl->cal_data);
+		if (rc < 0) {
+			pr_err("%s read_eeprom_memory failed loop=%d\n", __func__,loop);
+			goto power_down;
+		}
+		else {
+			is_3a_checksumed = 0;
+			is_ois_checksumed = 0;
+			pr_err("%s read_eeprom_memory checksum loop=%d\n", __func__,loop);
+			if(is_have_ois) {
+				rc = msm_eeprom_fancymaker_checksum(e_ctrl);
+			} else  {
+				rc = msm_eeprom_fancymaker_checksum_no_ois(e_ctrl);
+			}
+			if(rc < 0)
+				need_retry = 1;
+		}
+		loop++;
+	}while((loop < 3) && need_retry);
+	pr_err("%s line %d\n", __func__, __LINE__);
+#else
 	rc = read_eeprom_memory(e_ctrl, &e_ctrl->cal_data);
 	if (rc < 0) {
 		pr_err("%s read_eeprom_memory failed\n", __func__);
 		goto power_down;
 	}
+#endif
+
 	for (j = 0; j < e_ctrl->cal_data.num_data; j++)
 		CDBG("memory_data[%d] = 0x%X\n", j,
 		     e_ctrl->cal_data.mapdata[j]);
 
+#ifdef CONFIG_MACH_SHENQI_K9
+	if(is_have_ois && is_ois_checksumed){
+		FadjDat_Lenovo(e_ctrl->cal_data.mapdata +EEPROM_OIS_OFFSET);
+	}
+
+	msm_eeprom_fancymaker_fill_id_table(e_ctrl,eb_info->eeprom_name);
+
+	e_ctrl->is_supported |= is_3a_checksumed;
+#else
 	e_ctrl->is_supported |= msm_eeprom_match_crc(&e_ctrl->cal_data);
+#endif
 
 	rc = msm_camera_power_down(power_info, e_ctrl->eeprom_device_type,
 		&e_ctrl->i2c_client);

@@ -29,19 +29,67 @@ static void msm_led_torch_brightness_set(struct led_classdev *led_cdev,
 	led_trigger_event(torch_trigger, value);
 };
 
+#ifdef CONFIG_MACH_SHENQI_K9
+static struct led_classdev msm_torch_led[MAX_LED_TRIGGERS] = {
+	{
+		.name		= "torch-light0",
+		.brightness_set	= msm_led_torch_brightness_set,
+		.brightness	= LED_OFF,
+	},
+	{
+		.name		= "torch-light1",
+		.brightness_set	= msm_led_torch_brightness_set,
+		.brightness	= LED_OFF,
+	},
+	{
+		.name		= "torch-light2",
+		.brightness_set	= msm_led_torch_brightness_set,
+		.brightness	= LED_OFF,
+	},
+};
+#else
 static struct led_classdev msm_torch_led = {
 	.name			= "torch-light",
 	.brightness_set	= msm_led_torch_brightness_set,
 	.brightness		= LED_OFF,
 };
+#endif
 
 int32_t msm_led_torch_create_classdev(struct platform_device *pdev,
 				void *data)
 {
 	int rc;
+#ifdef CONFIG_MACH_SHENQI_K9
+	int i = 0;
+#endif
 	struct msm_led_flash_ctrl_t *fctrl =
 		(struct msm_led_flash_ctrl_t *)data;
 
+#ifdef CONFIG_MACH_SHENQI_K9
+	if (!fctrl) {
+		pr_err("Invalid fctrl\n");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < fctrl->torch_num_sources; i++) {
+		if (fctrl->torch_trigger[i]) {
+			torch_trigger = fctrl->torch_trigger[i];
+			msm_led_torch_brightness_set(&msm_torch_led[i],
+				LED_OFF);
+
+			rc = led_classdev_register(&pdev->dev,
+				&msm_torch_led[i]);
+			if (rc) {
+				pr_err("Failed to register %d led dev. rc = %d\n",
+						i, rc);
+				return rc;
+			}
+		} else {
+			pr_err("Invalid fctrl->torch_trigger[%d]\n", i);
+			return -EINVAL;
+		}
+	}
+#else
 	if (!fctrl || !fctrl->torch_trigger) {
 		pr_err("Invalid fctrl or torch trigger\n");
 		return -EINVAL;
@@ -55,6 +103,7 @@ int32_t msm_led_torch_create_classdev(struct platform_device *pdev,
 		pr_err("Failed to register led dev. rc = %d\n", rc);
 		return rc;
 	}
+#endif
 
 	return 0;
 };

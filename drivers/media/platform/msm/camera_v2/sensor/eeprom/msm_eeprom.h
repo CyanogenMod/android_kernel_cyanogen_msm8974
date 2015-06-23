@@ -46,4 +46,17 @@ struct msm_eeprom_ctrl_t {
 	uint32_t subdev_id;
 };
 
+#ifdef CONFIG_MACH_SHENQI_K9
+struct msm_eeprom_id_t {
+	uint32_t supplier_id;
+	uint32_t sensor_id;
+	const char *eeprom_name;
+};
+
+struct msm_sensor_module_id_name_map {
+	uint32_t supplier_id;
+	uint32_t sensor_id;
+	const char *sensor_module_name;
+};
+#endif
 #endif

@@ -1,0 +1,6 @@
+# ShenQi configuration options
+
+config MACH_SHENQI_K9
+	bool "K9 board"
+	help
+		Support for ShenQi K9

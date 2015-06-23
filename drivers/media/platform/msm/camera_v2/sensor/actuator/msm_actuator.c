@@ -10,13 +10,20 @@
  * GNU General Public License for more details.
  */
 
+#ifdef CONFIG_MSM_CAMERA_SENSOR_RHM_OIS_ACTUATOR
+#define RHM_OIS_ACTUATOR
+#endif
+
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
 #include <linux/module.h>
 #include "msm_sd.h"
 #include "msm_actuator.h"
 #include "msm_cci.h"
-
+#ifdef RHM_OIS_ACTUATOR
+#include "OIS_head.h"
+#include <linux/proc_fs.h>
+#endif
 DEFINE_MSM_MUTEX(msm_actuator_mutex);
 
 /*#define MSM_ACUTUATOR_DEBUG*/
@@ -40,6 +47,12 @@ static struct msm_actuator *actuators[] = {
 	&msm_piezo_actuator_table,
 };
 
+#ifdef RHM_OIS_ACTUATOR
+struct msm_actuator_ctrl_t *actuator_ctrl = NULL;
+#if 0
+static int32_t need_load_fw = 1;
+#endif
+#endif
 static int32_t msm_actuator_piezo_set_default_focus(
 	struct msm_actuator_ctrl_t *a_ctrl,
 	struct msm_actuator_move_params_t *move_params)
@@ -95,6 +108,57 @@ static void msm_actuator_parse_i2c_params(struct msm_actuator_ctrl_t *a_ctrl,
 				write_arr[i].hw_shift);
 
 			if (write_arr[i].reg_addr != 0xFFFF) {
+#ifdef CONFIG_MACH_SHENQI_K9
+				if(!strcmp(a_ctrl->pdev->name,"1c.qcom,actuator")) {
+					i2c_byte1 = write_arr[i].reg_addr;
+					i2c_byte2 = 0x0;
+					i2c_tbl[a_ctrl->i2c_tbl_index].reg_addr = i2c_byte1;
+					i2c_tbl[a_ctrl->i2c_tbl_index].reg_data = i2c_byte2;
+					i2c_tbl[a_ctrl->i2c_tbl_index].delay = 0;
+					a_ctrl->i2c_tbl_index++;
+					i++;
+
+					i2c_byte1 = write_arr[i].reg_addr;
+					i2c_byte2 = (value & 0xFF00) >> 8;;
+					i2c_tbl[a_ctrl->i2c_tbl_index].reg_addr = i2c_byte1;
+					i2c_tbl[a_ctrl->i2c_tbl_index].reg_data = i2c_byte2;
+					i2c_tbl[a_ctrl->i2c_tbl_index].delay = 0;
+					a_ctrl->i2c_tbl_index++;
+					i++;
+					CDBG("i2c_byte1:0x%x, i2c_byte2:0x%x\n", i2c_byte1, i2c_byte2);
+
+					i2c_byte1 = write_arr[i].reg_addr;
+					i2c_byte2 =value & 0xFF;
+					i2c_tbl[a_ctrl->i2c_tbl_index].reg_addr = i2c_byte1;
+					i2c_tbl[a_ctrl->i2c_tbl_index].reg_data = i2c_byte2;
+					i2c_tbl[a_ctrl->i2c_tbl_index].delay = 0;
+					a_ctrl->i2c_tbl_index++;
+					i++;
+					CDBG("i2c_byte1:0x%x, i2c_byte2:0x%x\n", i2c_byte1, i2c_byte2);
+
+					i2c_byte1 = write_arr[i].reg_addr;
+					i2c_byte2 = 0x90;
+
+				} else {
+					i2c_byte1 = write_arr[i].reg_addr;
+					i2c_byte2 = value;
+					if (size != (i+1)) {
+						i2c_byte2 = value & 0xFF;
+						CDBG("byte1:0x%x, byte2:0x%x\n",
+							i2c_byte1, i2c_byte2);
+						i2c_tbl[a_ctrl->i2c_tbl_index].
+							reg_addr = i2c_byte1;
+						i2c_tbl[a_ctrl->i2c_tbl_index].
+							reg_data = i2c_byte2;
+						i2c_tbl[a_ctrl->i2c_tbl_index].
+							delay = 0;
+						a_ctrl->i2c_tbl_index++;
+						i++;
+						i2c_byte1 = write_arr[i].reg_addr;
+						i2c_byte2 = (value & 0xFF00) >> 8;
+					}
+				}
+#else
 				i2c_byte1 = write_arr[i].reg_addr;
 				i2c_byte2 = value;
 				if (size != (i+1)) {
@@ -112,6 +176,7 @@ static void msm_actuator_parse_i2c_params(struct msm_actuator_ctrl_t *a_ctrl,
 					i2c_byte1 = write_arr[i].reg_addr;
 					i2c_byte2 = (value & 0xFF00) >> 8;
 				}
+#endif
 			} else {
 				i2c_byte1 = (value & 0xFF00) >> 8;
 				i2c_byte2 = value & 0xFF;
@@ -683,6 +748,9 @@ static int32_t msm_actuator_config(struct msm_actuator_ctrl_t *a_ctrl,
 	struct msm_actuator_cfg_data *cdata =
 		(struct msm_actuator_cfg_data *)argp;
 	int32_t rc = 0;
+#ifdef RHM_OIS_ACTUATOR
+	extern int16_t rh63163_init( void );
+#endif
 	mutex_lock(a_ctrl->actuator_mutex);
 	CDBG("Enter\n");
 	CDBG("%s type %d\n", __func__, cdata->cfgtype);
@@ -697,6 +765,13 @@ static int32_t msm_actuator_config(struct msm_actuator_ctrl_t *a_ctrl,
 		if (rc < 0)
 			pr_err("init table failed %d\n", rc);
 		break;
+
+#ifdef RHM_OIS_ACTUATOR
+	case CFG_SET_ACTUATOR_OIS_INIT:
+		actuator_ctrl = a_ctrl;
+		rh63163_init();
+		break;
+#endif
 
 	case CFG_SET_DEFAULT_FOCUS:
 		rc = a_ctrl->func_tbl->actuator_set_default_focus(a_ctrl,
@@ -757,6 +832,9 @@ static struct msm_camera_i2c_fn_t msm_sensor_cci_func_tbl = {
 	.i2c_read_seq = msm_camera_cci_i2c_read_seq,
 	.i2c_write = msm_camera_cci_i2c_write,
 	.i2c_write_table = msm_camera_cci_i2c_write_table,
+#ifdef CONFIG_MACH_SHENQI_K9
+	.i2c_write_seq = msm_camera_cci_i2c_write_seq,
+#endif
 	.i2c_write_seq_table = msm_camera_cci_i2c_write_seq_table,
 	.i2c_write_table_w_microdelay =
 		msm_camera_cci_i2c_write_table_w_microdelay,

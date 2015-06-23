@@ -1,0 +1,38 @@
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+
+/include/ "../msm8974-regulator.dtsi"
+
+/* RPM controlled regulators: */
+
+&rpm_bus {
+	rpm-regulator-smpa1 {
+		pm8941_s1: regulator-s1 {
+			regulator-max-microvolt = <1400000>;
+		};
+	};
+
+	rpm-regulator-ldoa3 {
+		pm8941_l3: regulator-l3 {
+			regulator-min-microvolt = <1200000>;
+		};
+	};
+
+	rpm-regulator-ldoa23 {
+		pm8941_l23: regulator-l23 {
+			regulator-min-microvolt = <2850000>;
+			regulator-max-microvolt = <2850000>;
+			qcom,init-voltage = <2850000>;
+		};
+	};
+};

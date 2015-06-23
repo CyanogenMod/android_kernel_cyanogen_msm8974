@@ -36,6 +36,10 @@
 #include <linux/of_gpio.h>
 #include <linux/qpnp/pin.h>
 
+#ifdef CONFIG_BATTERY_BQ27530
+#define SUPPORT_QPNP_VBUS_OVP
+#endif
+
 /* Interrupt offsets */
 #define INT_RT_STS(base)			(base + 0x10)
 #define INT_SET_TYPE(base)			(base + 0x11)
@@ -402,6 +406,12 @@ struct qpnp_chg_chip {
 	u8				chg_temp_thresh_default;
 };
 
+#ifdef CONFIG_BATTERY_BQ27530
+static struct qpnp_chg_chip *qpnp_chip = NULL;
+
+extern int bq24192_update_ovp_state(int usb_health);
+#endif
+
 static void
 qpnp_chg_set_appropriate_battery_current(struct qpnp_chg_chip *chip);
 
@@ -718,7 +728,11 @@ qpnp_chg_is_batt_present(struct qpnp_chg_chip *chip)
 		return rc;
 	}
 
+#ifdef CONFIG_BATTERY_BQ27530
+	return 1;
+#else
 	return (batt_pres_rt_sts & BATT_PRES_IRQ) ? 1 : 0;
+#endif
 }
 
 static int
@@ -854,6 +868,49 @@ qpnp_chg_check_usbin_health(struct qpnp_chg_chip *chip)
 
 	return usbin_health;
 }
+
+#ifdef CONFIG_BATTERY_BQ27530
+int bq24192_get_usbin_health(void)
+{
+	int usbin_health = -1;
+
+	if(NULL == qpnp_chip){
+		printk("%s qpnp_chip is NULL.\n",__func__);
+		return usbin_health;
+	}
+
+	usbin_health = qpnp_chg_check_usbin_health(qpnp_chip);
+
+	return usbin_health;
+}
+
+int bq24192_is_usbin_present(void)
+{
+	int usb_present = -1;
+
+	if(NULL == qpnp_chip){
+		printk("%s qpnp_chip is NULL.\n",__func__);
+		return usb_present;
+	}
+	usb_present = qpnp_chg_is_usb_chg_plugged_in(qpnp_chip);
+
+	return usb_present;
+}
+
+int bq24192_is_usbin_hostmode(void)
+{
+	int host_mode = -1;
+
+	if(NULL == qpnp_chip){
+		printk("%s qpnp_chip is NULL.\n",__func__);
+		return host_mode;
+	}
+	host_mode = qpnp_chg_is_otg_en_set(qpnp_chip);
+	/*printk("%s usb_present %d.\n",__func__,usb_present);*/
+
+	return host_mode;
+}
+#endif
 
 static int
 qpnp_chg_is_dc_chg_plugged_in(struct qpnp_chg_chip *chip)
@@ -1212,6 +1269,9 @@ qpnp_chg_charge_en(struct qpnp_chg_chip *chip, int enable)
 		return 0;
 	}
 	pr_debug("charging %s\n", enable ? "enabled" : "disabled");
+#ifdef CONFIG_BATTERY_BQ27530
+    enable = 0;
+#endif
 	return qpnp_chg_masked_write(chip, chip->chgr_base + CHGR_CHG_CTRL,
 			CHGR_CHG_EN,
 			enable ? CHGR_CHG_EN : 0, 1);
@@ -1229,6 +1289,9 @@ qpnp_chg_force_run_on_batt(struct qpnp_chg_chip *chip, int disable)
 
 	/* This bit forces the charger to run off of the battery rather
 	 * than a connected charger */
+#ifdef CONFIG_BATTERY_BQ27530
+    disable = 1;
+#endif
 	return qpnp_chg_masked_write(chip, chip->chgr_base + CHGR_CHG_CTRL,
 			CHGR_ON_BAT_FORCE_BIT,
 			disable ? CHGR_ON_BAT_FORCE_BIT : 0, 1);
@@ -1711,6 +1774,11 @@ qpnp_chg_usb_usbin_valid_irq_handler(int irq, void *_chip)
 	/* In host mode notifications cmoe from USB supply */
 	if (host_mode)
 		return IRQ_HANDLED;
+
+#ifdef CONFIG_BATTERY_BQ27530
+	usbin_health = qpnp_chg_check_usbin_health(chip);
+	bq24192_update_ovp_state(usbin_health);
+#endif
 
 	if (chip->usb_present ^ usb_present) {
 		chip->aicl_settled = false;
@@ -3078,6 +3146,7 @@ qpnp_chg_trim_ibat(struct qpnp_chg_chip *chip, u8 ibat_trim)
 				return;
 		}
 
+#ifndef CONFIG_BATTERY_BQ27530
 		if (chip->type == SMBBP) {
 			rc = qpnp_chg_masked_write(chip,
 					chip->buck_base + SEC_ACCESS,
@@ -3087,6 +3156,7 @@ qpnp_chg_trim_ibat(struct qpnp_chg_chip *chip, u8 ibat_trim)
 				return;
 			}
 		}
+#endif
 
 		ibat_trim |= IBAT_TRIM_GOOD_BIT;
 		rc = qpnp_chg_write(chip, &ibat_trim,
@@ -3123,7 +3193,11 @@ qpnp_chg_input_current_settled(struct qpnp_chg_chip *chip)
 	if (!chip->ibat_calibration_enabled)
 		return 0;
 
+#ifdef CONFIG_BATTERY_BQ27530
+	if (chip->type != SMBB)
+#else
 	if (chip->type != SMBB && chip->type != SMBBP)
+#endif
 		return 0;
 
 	rc = qpnp_chg_read(chip, &reg,
@@ -3144,6 +3218,7 @@ qpnp_chg_input_current_settled(struct qpnp_chg_chip *chip)
 						ibat_trim, IBAT_TRIM_MEAN);
 		ibat_trim = IBAT_TRIM_MEAN;
 
+#ifndef CONFIG_BATTERY_BQ27530
 		if (chip->type == SMBBP) {
 			rc = qpnp_chg_masked_write(chip,
 					chip->buck_base + SEC_ACCESS,
@@ -3153,6 +3228,7 @@ qpnp_chg_input_current_settled(struct qpnp_chg_chip *chip)
 				return rc;
 			}
 		}
+#endif
 
 		rc = qpnp_chg_masked_write(chip,
 				chip->buck_base + BUCK_CTRL_TRIM3,
@@ -4144,6 +4220,22 @@ int get_vbat_averaged(struct qpnp_chg_chip *chip, int sample_count)
 	vbat_uv = vbat_uv / sample_count;
 	return vbat_uv;
 }
+
+#ifdef SUPPORT_QPNP_VBUS_OVP
+#define VBUS_MAX_THRESHOLD		6500000
+#define VBUS_SAMPLE_COUNT		16
+int qpnp_check_vbus_ovp(void)
+{
+	int vusb_uv = get_vusb_averaged(qpnp_chip, VBUS_SAMPLE_COUNT);
+
+	//printk("%s: vbus is %d\n", __func__, vusb_uv);
+	if (vusb_uv >= VBUS_MAX_THRESHOLD) {
+		pr_err("%s, vbus is too high, %d >= %d\n", __func__, vusb_uv, VBUS_MAX_THRESHOLD);
+		return 1;
+	} else
+		return 0;
+}
+#endif
 
 static void
 qpnp_chg_reduce_power_stage(struct qpnp_chg_chip *chip)
@@ -5226,7 +5318,11 @@ qpnp_charger_probe(struct spmi_device *spmi)
 	chip->dev = &(spmi->dev);
 	chip->spmi = spmi;
 
+#ifdef CONFIG_BATTERY_BQ27530
+	chip->usb_psy = power_supply_get_by_name("usb_qpnp");
+#else
 	chip->usb_psy = power_supply_get_by_name("usb");
+#endif
 	if (!chip->usb_psy) {
 		pr_err("usb supply not found deferring probe\n");
 		rc = -EPROBE_DEFER;
@@ -5293,8 +5389,12 @@ qpnp_charger_probe(struct spmi_device *spmi)
 				goto fail_chg_enable;
 			}
 
+#ifdef CONFIG_BATTERY_BQ27530
+			if (subtype == SMBB_BAT_IF_SUBTYPE) {
+#else // for bq2753x+bq241xx
 			if (subtype == SMBB_BAT_IF_SUBTYPE ||
 					subtype == SMBBP_BAT_IF_SUBTYPE) {
+#endif
 				chip->iadc_dev = qpnp_get_iadc(chip->dev,
 						"chg");
 				if (IS_ERR(chip->iadc_dev)) {
@@ -5444,7 +5544,11 @@ qpnp_charger_probe(struct spmi_device *spmi)
 	chip->insertion_ocv_uv = -EINVAL;
 	chip->batt_present = qpnp_chg_is_batt_present(chip);
 	if (chip->bat_if_base) {
+#ifdef CONFIG_BATTERY_BQ27530
+		chip->batt_psy.name = "battery_qpnp";
+#else
 		chip->batt_psy.name = "battery";
+#endif
 		chip->batt_psy.type = POWER_SUPPLY_TYPE_BATTERY;
 		chip->batt_psy.properties = msm_batt_power_props;
 		chip->batt_psy.num_properties =
@@ -5576,6 +5680,10 @@ qpnp_charger_probe(struct spmi_device *spmi)
 			qpnp_chg_is_dc_chg_plugged_in(chip),
 			get_prop_batt_present(chip),
 			get_prop_batt_health(chip));
+#ifdef CONFIG_BATTERY_BQ27530
+			qpnp_chip = chip;
+#endif
+
 	return 0;
 
 unregister_dc_psy:

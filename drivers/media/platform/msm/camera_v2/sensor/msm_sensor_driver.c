@@ -32,6 +32,10 @@
 /* Static declaration */
 static struct msm_sensor_ctrl_t *g_sctrl[MAX_CAMERAS];
 
+#ifdef CONFIG_MACH_SHENQI_K9
+extern int msm_eeprom_fancymaker_check_sensor_module_id(const char * sensor_name, const char * eeprom_name);
+#endif
+
 static int msm_sensor_platform_remove(struct platform_device *pdev)
 {
 	struct msm_sensor_ctrl_t  *s_ctrl;
@@ -586,6 +590,14 @@ int32_t msm_sensor_driver_probe(void *setting)
 		pr_err("%s power up failed", slave_info->sensor_name);
 		goto FREE_CAMERA_INFO;
 	}
+
+#ifdef CONFIG_MACH_SHENQI_K9
+	rc = msm_eeprom_fancymaker_check_sensor_module_id(slave_info->sensor_name,  slave_info->eeprom_name);
+	if (rc < 0) {
+		pr_err("%s fancymaker_check_sensor_id failed", slave_info->sensor_name);
+		goto CAMERA_POWER_DOWN;
+	}
+#endif
 
 	pr_err("%s probe succeeded", slave_info->sensor_name);
 

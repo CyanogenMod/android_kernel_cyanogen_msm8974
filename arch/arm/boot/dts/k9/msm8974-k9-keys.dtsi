@@ -1,0 +1,72 @@
+/*
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	hall_switch {
+		compatible = "shenqi,hall_switch";
+		interrupt-parent = <&msmgpio>;
+		interrupts = <80 0>;
+		shenqi,hall-irq-gpio = <&msmgpio 80 0x0>;
+		vdd-supply = <&pm8941_lvs1>;
+	};
+
+	gpio_keys {
+	  compatible = "gpio-keys";
+	  input-name = "gpio-keys";
+
+	  vol_up {
+	    label = "volume_up";
+	    gpios = <&pm8941_gpios 5 0x1>;
+	    linux,input-type = <1>;
+	    linux,code = <115>;
+	    gpio-key,wakeup;
+	    debounce-interval = <15>;
+	  };
+
+	  home {
+	    label = "home";
+	    gpios = <&msmgpio 65 0x1>;
+	    linux,input-type = <1>;
+	    linux,code = <102>;
+	    gpio-key,wakeup;
+	    debounce-interval = <15>;
+	  };
+	};
+
+	spi@f9927000 {
+		fpc_fpc1020@0 {
+			compatible = "fpc,fpc1020";
+			reg = <0>;
+			spi-max-frequency = <8000000>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <74 0x1>;
+			fpc,gpio_irq  = <74>;
+			fpc,gpio_reset = <33>;
+			fpc,gpio_cs  = <25>;
+			vdd_ana-supply = <&spi_eth_vreg>;
+			vdd_io-supply = <&spi_eth_vreg>;
+		};
+	};
+
+  /* TODO: find out whether we need to maintain these, hardware samples
+	don't include this hardware. */
+	gen-vkeys {
+	  compatible = "qcom,gen-vkeys";
+	  label = "atmel_mxt_ts";
+	  qcom,disp-maxx = <720>;
+	  qcom,disp-maxy = <1280>;
+	  qcom,panel-maxx = <760>;
+	  qcom,panel-maxy = <1424>;
+	  qcom,key-codes = <158 139 102 217>;
+	};
+};

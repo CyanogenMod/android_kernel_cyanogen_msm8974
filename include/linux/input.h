@@ -471,6 +471,10 @@ struct input_keymap_entry {
 
 #define KEY_MICMUTE		248	/* Mute / unmute the microphone */
 
+#define KEY_NAVI_RIGHT  249
+#define KEY_NAVI_LEFT   254
+#define KEY_FNGR_DETECT 0x2e8
+
 /* Code 255 is reserved for special needs of AT keyboard driver */
 
 #define BTN_MISC		0x100
@@ -706,6 +710,14 @@ struct input_keymap_entry {
 #define KEY_CAMERA_DOWN		0x218
 #define KEY_CAMERA_LEFT		0x219
 #define KEY_CAMERA_RIGHT	0x21a
+#define KEY_GESTURE_C  0x21b
+#define KEY_GESTURE_LR 0x21c
+#define KEY_GESTURE_RL 0x21d
+#define KEY_GESTURE_DT 0x21e
+#define KEY_GESTURE_V  0x21f
+#define KEY_GESTURE_E  0x220
+#define KEY_GESTURE_M  0x221
+#define KEY_GESTURE_W  0x222
 
 #define BTN_TRIGGER_HAPPY		0x2c0
 #define BTN_TRIGGER_HAPPY1		0x2c0

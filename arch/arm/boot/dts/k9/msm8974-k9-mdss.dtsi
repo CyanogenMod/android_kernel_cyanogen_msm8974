@@ -1,0 +1,48 @@
+/*
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	qcom,mdss_dsi@fd922800 {
+		qcom,dsi-pref-prim-pan = <&dsi_tianma_nt35596_vid>;
+	};	
+
+	qcom,mdss_mdp@fd900000 {
+		qcom,mdss-pref-prim-intf = "dsi";
+		batfet-supply = <&pm8941_chg_batif>;
+	};
+};
+
+&mdss_fb0 {
+	qcom,memory-reservation-size = <0x17BB000>;
+	qcom,memblock-reserve = <0x02800000 0x01E00000>;
+};
+
+&mdss_dsi0 {
+	qcom,platform-vsn-gpio = <&msmgpio 14 0>;
+	qcom,platform-vsp-gpio = <&msmgpio 16 0>;
+	qcom,platform-enable-gpio = <&pm8941_gpios 13 0>;
+	qcom,platform-outdoor-gpio = <&msmgpio 64 0>;
+	/delete-property/ qcom,platform-reset-gpio;
+
+	qcom,platform-supply-entry1 {
+		qcom,supply-post-on-sleep = <0>;
+	};
+
+	qcom,platform-supply-entry2 {
+		qcom,supply-post-on-sleep = <0>;
+	};
+};
+
+&mdss_dsi1 {
+	compatible = "";
+};

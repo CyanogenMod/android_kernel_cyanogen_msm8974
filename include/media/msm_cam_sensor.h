@@ -54,6 +54,10 @@
 #define MAX_NUMBER_OF_STEPS 47
 #define MAX_POWER_CONFIG 12
 
+#ifdef CONFIG_MACH_SHENQI_K9
+#define MAX_LED_TRIGGERS 3
+#endif
+
 typedef enum sensor_stats_type {
 	YRGB,
 	YYYY,
@@ -494,6 +498,9 @@ enum msm_actuator_cfg_type_t {
 	CFG_SET_POSITION,
 	CFG_ACTUATOR_POWERDOWN,
 	CFG_ACTUATOR_POWERUP,
+#ifdef CONFIG_MSM_CAMERA_SENSOR_RHM_OIS_ACTUATOR
+	CFG_SET_ACTUATOR_OIS_INIT,
+#endif
 };
 
 enum actuator_type {
@@ -642,8 +649,13 @@ enum msm_camera_led_config_t {
 
 struct msm_camera_led_cfg_t {
 	enum msm_camera_led_config_t cfgtype;
+#ifdef CONFIG_MACH_SHENQI_K9
+	int32_t torch_current[MAX_LED_TRIGGERS];
+	int32_t flash_current[MAX_LED_TRIGGERS];
+#else
 	uint32_t torch_current;
 	uint32_t flash_current[2];
+#endif
 };
 
 /* sensor init structures and enums */
