@@ -4385,13 +4385,13 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"PRI_MI2S_RX_DL_HL", "Switch", "PRI_MI2S_DL_HL"},
 	{"PRI_MI2S_RX", NULL, "PRI_MI2S_RX_DL_HL"},
 	{"MI2S_UL_HL", NULL, "TERT_MI2S_TX"},
-#ifdef CONFIG_SHENQI_K9
+#ifdef CONFIG_MACH_SHENQI_K9
 	{"MI2S_UL_HL", NULL, "QUAT_MI2S_TX"},
 #endif
 	{"SEC_I2S_RX", NULL, "SEC_I2S_DL_HL"},
 	{"PRI_MI2S_UL_HL", NULL, "PRI_MI2S_TX"},
 	{"SEC_MI2S_RX", NULL, "SEC_MI2S_DL_HL"},
-#ifdef CONFIG_SHENQI_K9
+#ifdef CONFIG_MACH_SHENQI_K9
 	{"QUAT_MI2S_DL_HL", "Switch", "QUAT_MI2S_RX"},
 #endif
 

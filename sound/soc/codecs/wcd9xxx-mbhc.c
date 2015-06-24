@@ -71,7 +71,11 @@
 #define SWCH_IRQ_DEBOUNCE_TIME_US 5000
 #define BTN_RELEASE_DEBOUNCE_TIME_MS 25
 
+#ifdef CONFIG_MACH_SHENQI_K9
+#define GND_MIC_SWAP_THRESHOLD 4
+#else
 #define GND_MIC_SWAP_THRESHOLD 2
+#endif
 #define OCP_ATTEMPT 1
 
 #define FW_READ_ATTEMPTS 15
@@ -123,7 +127,11 @@
 #define WCD9XXX_V_CS_HS_MAX 500
 #define WCD9XXX_V_CS_NO_MIC 5
 #define WCD9XXX_MB_MEAS_DELTA_MAX_MV 80
+#ifdef CONFIG_MACH_SHENQI_K9
+#define WCD9XXX_CS_MEAS_DELTA_MAX_MV 14
+#else
 #define WCD9XXX_CS_MEAS_DELTA_MAX_MV 12
+#endif
 
 static int impedance_detect_en;
 module_param(impedance_detect_en, int,
@@ -812,12 +820,22 @@ static void wcd9xxx_insert_detect_setup(struct wcd9xxx_mbhc *mbhc, bool ins)
 		 ins ? "insert" : "removal");
 	/* Disable detection to avoid glitch */
 	snd_soc_update_bits(mbhc->codec, WCD9XXX_A_MBHC_INSERT_DETECT, 1, 0);
+#ifdef CONFIG_MACH_SHENQI_K9
+	/* Use outer pull-up. */
+	if (mbhc->mbhc_cfg->gpio_level_insert)
+		snd_soc_write(mbhc->codec, WCD9XXX_A_MBHC_INSERT_DETECT,
+			      (0x18 | (ins ? (1 << 1) : 0)));
+	else
+		snd_soc_write(mbhc->codec, WCD9XXX_A_MBHC_INSERT_DETECT,
+			      (0x1C | (ins ? (1 << 1) : 0)));
+#else
 	if (mbhc->mbhc_cfg->gpio_level_insert)
 		snd_soc_write(mbhc->codec, WCD9XXX_A_MBHC_INSERT_DETECT,
 			      (0x68 | (ins ? (1 << 1) : 0)));
 	else
 		snd_soc_write(mbhc->codec, WCD9XXX_A_MBHC_INSERT_DETECT,
 			      (0x6C | (ins ? (1 << 1) : 0)));
+#endif
 	/* Re-enable detection */
 	snd_soc_update_bits(mbhc->codec, WCD9XXX_A_MBHC_INSERT_DETECT, 1, 1);
 }
@@ -1443,6 +1461,7 @@ wcd9xxx_cs_find_plug_type(struct wcd9xxx_mbhc *mbhc,
 			if (!minv || minv > d->_vdces)
 				minv = d->_vdces;
 		}
+#ifndef CONFIG_MACH_SHENQI_K9
 		if ((!d->mic_bias &&
 		    (d->_vdces >= WCD9XXX_CS_MEAS_INVALD_RANGE_LOW_MV &&
 		     d->_vdces <= WCD9XXX_CS_MEAS_INVALD_RANGE_HIGH_MV)) ||
@@ -1453,6 +1472,7 @@ wcd9xxx_cs_find_plug_type(struct wcd9xxx_mbhc *mbhc,
 			type = PLUG_TYPE_INVALID;
 			goto exit;
 		}
+#endif
 	}
 
 	delta_thr = ((highhph_cnt == sz) || highhph) ?
@@ -1530,6 +1550,7 @@ wcd9xxx_cs_find_plug_type(struct wcd9xxx_mbhc *mbhc,
 		goto exit;
 	}
 
+#ifndef CONFIG_MACH_SHENQI_K9
 	if (!(event_state & (1UL << MBHC_EVENT_PA_HPHL))) {
 		if (((type == PLUG_TYPE_HEADSET ||
 		      type == PLUG_TYPE_HEADPHONE) && ch != sz)) {
@@ -1538,6 +1559,7 @@ wcd9xxx_cs_find_plug_type(struct wcd9xxx_mbhc *mbhc,
 			type = PLUG_TYPE_INVALID;
 		}
 	}
+#endif
 
 	if (type == PLUG_TYPE_HEADSET &&
 	    (mbhc->mbhc_cfg->micbias_enable_flags &
