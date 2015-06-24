@@ -39,6 +39,7 @@
 	    linux,input-type = <1>;
 	    linux,code = <102>;
 	    gpio-key,wakeup;
+	    gpio-key,can-disable;
 	    debounce-interval = <15>;
 	  };
 	};

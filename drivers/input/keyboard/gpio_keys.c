@@ -600,6 +600,8 @@ static int gpio_keys_get_devtree_pdata(struct device *dev,
 
 		buttons[i].wakeup = !!of_get_property(pp, "gpio-key,wakeup", NULL);
 
+		buttons[i].can_disable = !!of_get_property(pp, "gpio-key,can-disable", NULL);
+
 		if (of_property_read_u32(pp, "debounce-interval", &reg) == 0)
 			buttons[i].debounce_interval = reg;
 		else
