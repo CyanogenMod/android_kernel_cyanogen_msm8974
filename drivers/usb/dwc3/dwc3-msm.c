@@ -3197,6 +3197,8 @@ static int __devinit dwc3_msm_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev,
 			"unable to read platform data qdss tx fifo size\n");
 
+	prop_chg_detect = of_property_read_bool(node, "qcom,prop-chg-detect");
+
 	dwc3_set_notifier(&dwc3_msm_notify_event);
 	/* usb_psy required only for vbus_notifications or charging support */
 	if (mdwc->ext_xceiv.otg_capability ||
