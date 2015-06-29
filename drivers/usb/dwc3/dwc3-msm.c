@@ -3203,11 +3203,7 @@ static int __devinit dwc3_msm_probe(struct platform_device *pdev)
 	/* usb_psy required only for vbus_notifications or charging support */
 	if (mdwc->ext_xceiv.otg_capability ||
 			!mdwc->charger.charging_disabled) {
-#ifdef CONFIG_BATTERY_BQ27530
-		mdwc->usb_psy.name = "usb_qpnp";
-#else
 		mdwc->usb_psy.name = "usb";
-#endif
 		mdwc->usb_psy.type = POWER_SUPPLY_TYPE_USB;
 		mdwc->usb_psy.supplied_to = dwc3_msm_pm_power_supplied_to;
 		mdwc->usb_psy.num_supplicants = ARRAY_SIZE(

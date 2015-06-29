@@ -45,7 +45,7 @@
 	};
 
 	qcom,bat-if@1200 {
-		status = "ok";
+		status = "disabled";
 	};
 
 	qcom,usb-chgpth@1300 {
