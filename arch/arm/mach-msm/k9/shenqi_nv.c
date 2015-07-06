@@ -16,7 +16,7 @@
 #define NV_MAX_SIZE		512
 /* [BEGIN] guohh1 20131011 add for FACTORYDATACHECK */
 //#define NV_OTHERS_SIZE		(NV_MAX_SIZE - NV_WIFI_ADDR_SIZE - NV_BT_ADDR_SIZE)
-#define NV_OTHERS_SIZE   (NV_MAX_SIZE - NV_WIFI_ADDR_SIZE - NV_BT_ADDR_SIZE-32-32-16-16-16 -16 - 32 - 8-8)
+#define NV_OTHERS_SIZE   (NV_MAX_SIZE - NV_WIFI_ADDR_SIZE - NV_BT_ADDR_SIZE-32-32-16-16-16 -16 - 32 - 8-8-100)
 /* [END   ] guohh1 20131011 add for FACTORYDATACHECK*/
 
 struct smem_nv {
@@ -37,6 +37,9 @@ struct smem_nv {
 /* [BEGIN][PLAT-59][MODEM][cuigq1][20150520] set UE Mode by EFS */
        unsigned char nv_uemode[8];
 /* [END][PLAT-59][MODEM][cuigq1][20150520] set UE Mode by EFS */
+/* [BEGIN][PLAT-66][MODEM][guohh11][20150610] read NV2498 and set proc */
+       unsigned char nv_2498[100];
+/* [END][PLAT-66][MODEM][guohh11][20150610] read NV2498 and set proc */
 	unsigned char nv_others[NV_OTHERS_SIZE];	
 };
 static struct smem_nv * psmem_nv = NULL;
@@ -235,6 +238,21 @@ static int dump_lnv_uemode(char *buf, char **start, off_t offset,
     return len;
 }
 /* [END][PLAT-59][MODEM][cuigq1][20150520] set UE Mode by EFS */
+/* [BEGIN][PLAT-66][MODEM][guohh11][20150610] read NV2498 and set proc */
+static int dump_lnv_nv2498(char *buf, char **start, off_t offset,
+                  int count, int *eof, void *data)
+{
+    int len = 0;
+    if (!psmem_nv)
+        psmem_nv = smem_read_nv();
+    if (!psmem_nv)
+        return 0;
+    memcpy( buf, psmem_nv->nv_2498, 100);
+    len = strlen(psmem_nv->nv_2498);
+    *eof = 1;
+    return len;
+}
+/* [END][PLAT-66][MODEM][guohh11][20150610] read NV2498 and set proc */
 static void show_nv(void)
 {
 	struct proc_dir_entry *wifi_addr_entry;
@@ -255,6 +273,9 @@ static void show_nv(void)
        struct proc_dir_entry *uemode_addr_entry;
 /* [END][PLAT-59][MODEM][cuigq1][20150520] set UE Mode by EFS */
 
+/* [BEGIN][PLAT-66][MODEM][guohh11][20150610] read NV2498 and set proc */
+       struct proc_dir_entry *nv2498_addr_entry;
+/* [END][PLAT-66][MODEM][guohh11][20150610] read NV2498 and set proc */
 	wifi_addr_entry = create_proc_entry("mac_wifi", 0, NULL);
 	bt_addr_entry = create_proc_entry("mac_bt", 0, NULL);
 
@@ -304,6 +325,13 @@ static void show_nv(void)
            uemode_addr_entry ->read_proc = &dump_lnv_uemode;
        }
 /* [END][PLAT-59][MODEM][cuigq1][20150520] set UE Mode by EFS */
+/* [BEGIN][PLAT-66][MODEM][guohh11][20150610] read NV2498 and set proc */
+       nv2498_addr_entry = create_proc_entry("lnv2498", 0, NULL);
+       if (nv2498_addr_entry)
+       {
+           nv2498_addr_entry ->read_proc = &dump_lnv_nv2498;
+       }
+/* [END][PLAT-66][MODEM][guohh11][20150610] read NV2498 and set proc */
 }
 
 void __init shenqi_nv_init(void)

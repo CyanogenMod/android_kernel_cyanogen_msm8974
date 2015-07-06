@@ -22,6 +22,7 @@ static volatile int key_debug = 5;
 
 struct hall_switch_data{
     struct regulator *vdd;
+    struct regulator *ssc_vdd;
     struct input_dev *input_dev;
     struct delayed_work hall_work;
     struct workqueue_struct *hall_workqueue;
@@ -29,6 +30,7 @@ struct hall_switch_data{
     int hall_irq;
     int hall_gpio_val;
 };
+static struct hall_switch_data *hall_data = NULL;
 static irqreturn_t misc_hall_irq(int irq, void *data)
 {
     struct hall_switch_data *hall_data = data;
@@ -68,7 +70,6 @@ static int hall_probe(struct platform_device *pdev)
     int retval = 0;
 
     int err = 0;
-    struct hall_switch_data *hall_data;
     struct device_node *np = pdev->dev.of_node;
 
     if (is_probed) {
@@ -91,6 +92,14 @@ static int hall_probe(struct platform_device *pdev)
         }
     }
 
+    hall_data->ssc_vdd = regulator_get(&pdev->dev,"ssc");
+    if (!IS_ERR(hall_data->ssc_vdd)) {
+        printk("%s,ssc_vdd is correct",__func__);
+        err = regulator_enable(hall_data->ssc_vdd);
+        if (err) {
+            printk("%s,Regulator ssc_vdd enable failed ret=%d\n", __func__,err);
+        }
+    }
     /*----Register to Input Device----*/
     hall_data->input_dev = input_allocate_device();
     if (hall_data->input_dev == NULL){
@@ -168,12 +177,36 @@ static struct of_device_id hall_match_table[] = {
 #define hall_match_table NULL
 #endif
 
+static int hall_prepare(struct device *dev)
+{
+  int err = 0;
+  err = regulator_enable(hall_data->ssc_vdd);
+  if (err) {
+      printk("%s,Regulator ssc_vdd enable failed ret=%d\n", __func__,err);
+  }
+	return 0;
+}
+
+static void hall_complete(struct device *dev)
+{
+  int err = 0;
+  err = regulator_disable(hall_data->ssc_vdd);
+  if (err) {
+      printk("%s,Regulator ssc_vdd disable failed ret=%d\n", __func__,err);
+  }
+}
+
+static const struct dev_pm_ops hall_pm = {
+	.prepare = hall_prepare,
+	.complete = hall_complete
+};
 static struct platform_driver msm_hall_driver = {
     .probe = hall_probe,
     .driver = {
         .name = "msm_hall_switch",
         .owner = THIS_MODULE,
         .of_match_table = hall_match_table,
+        .pm	= &hall_pm,
     },
 };
 

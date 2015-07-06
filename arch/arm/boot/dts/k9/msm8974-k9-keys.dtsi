@@ -13,11 +13,13 @@
 
 &soc {
 	hall_switch {
+		reg = <0 0>;
 		compatible = "shenqi,hall_switch";
 		interrupt-parent = <&msmgpio>;
 		interrupts = <80 0>;
 		shenqi,hall-irq-gpio = <&msmgpio 80 0x0>;
 		vdd-supply = <&pm8941_lvs1>;
+		ssc-supply = <&pm8941_l18>;
 	};
 
 	gpio_keys {

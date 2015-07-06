@@ -48,12 +48,14 @@ static struct gpiomux_setting mdm2ap_errfatal_cfg = {
 	.dir = GPIOMUX_OUT_LOW,
 };
 
+#if 0
 static struct gpiomux_setting mdm2ap_pblrdy = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_NONE,
-	.dir = GPIOMUX_IN,
+    .func = GPIOMUX_FUNC_GPIO,
+    .drv = GPIOMUX_DRV_2MA,
+    .pull = GPIOMUX_PULL_NONE,
+    .dir = GPIOMUX_IN,
 };
+#endif
 
 
 #if 0 // spi5 for FPC
@@ -117,13 +119,15 @@ static struct msm_gpiomux_config mdm_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &ap2mdm_wakeup,
 		}
 	},
+#if 0
 	/* MDM2AP_PBL_READY*/
-	{
-		.gpio = 80,
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &mdm2ap_pblrdy,
-		}
-	},
+    {
+        .gpio = 80,
+        .settings = {
+            [GPIOMUX_SUSPENDED] = &mdm2ap_pblrdy,
+        }
+    },
+#endif
 };
 
 static struct gpiomux_setting gpio_uart_config = {
@@ -199,6 +203,7 @@ static struct gpiomux_setting  quat_mi2s_sus_cfg = {
 };
 
 static struct msm_gpiomux_config msm8974_quat_mi2s_configs[] __initdata = {
+#if 0 //gpio 57 used for audio_mic_cmd_sw
     {
         .gpio	= 57,		/*  mi2s mclk */
         .settings = {
@@ -206,6 +211,7 @@ static struct msm_gpiomux_config msm8974_quat_mi2s_configs[] __initdata = {
             [GPIOMUX_ACTIVE] = &quat_mi2s_act_cfg,
         },
     },
+#endif
     {
         .gpio	= 58,		/*  mi2s sck */
         .settings = {
@@ -333,6 +339,72 @@ static struct gpiomux_setting tfa9890_reset_active_cfg = {
 	.dir = GPIOMUX_OUT_LOW,
 };
 
+static struct gpiomux_setting audio_r_cmd_sw_active_cfg = {
+       .func = GPIOMUX_FUNC_GPIO,
+       .drv  = GPIOMUX_DRV_2MA,
+       .pull = GPIOMUX_PULL_NONE,
+       .dir = GPIOMUX_OUT_LOW,
+};
+
+static struct gpiomux_setting audio_r_cmd_sw_suspend_cfg = {
+       .func = GPIOMUX_FUNC_GPIO,
+       .drv = GPIOMUX_DRV_2MA,
+       .pull = GPIOMUX_PULL_DOWN,
+};
+
+static struct gpiomux_setting audio_mic_cmd_sw_active_cfg = {
+       .func = GPIOMUX_FUNC_GPIO,
+       .drv  = GPIOMUX_DRV_2MA,
+       .pull = GPIOMUX_PULL_NONE,
+       .dir = GPIOMUX_OUT_LOW,
+};
+
+static struct gpiomux_setting audio_mic_cmd_sw_suspend_cfg = {
+       .func = GPIOMUX_FUNC_GPIO,
+       .drv = GPIOMUX_DRV_2MA,
+       .pull = GPIOMUX_PULL_DOWN,
+};
+
+static struct gpiomux_setting anc_audio_cmd_active_cfg = {
+       .func = GPIOMUX_FUNC_GPIO,
+       .drv  = GPIOMUX_DRV_16MA,
+       .pull = GPIOMUX_PULL_UP,
+       .dir = GPIOMUX_IN,
+};
+
+static struct gpiomux_setting anc_audio_cmd_suspend_cfg = {
+       .func = GPIOMUX_FUNC_GPIO,
+       .drv = GPIOMUX_DRV_16MA,
+       .pull = GPIOMUX_PULL_UP,
+       .dir = GPIOMUX_IN,
+};
+#if 0 //del by audio
+static struct gpiomux_setting usb2_sw_en1_active_cfg = {
+       .func = GPIOMUX_FUNC_GPIO,
+       .drv  = GPIOMUX_DRV_2MA,
+       .pull = GPIOMUX_PULL_NONE,
+       .dir = GPIOMUX_OUT_LOW,
+};
+
+static struct gpiomux_setting usb2_sw_en1_suspend_cfg = {
+       .func = GPIOMUX_FUNC_GPIO,
+       .drv = GPIOMUX_DRV_2MA,
+       .pull = GPIOMUX_PULL_DOWN,
+};
+
+static struct gpiomux_setting usb2_sw_en2_active_cfg = {
+       .func = GPIOMUX_FUNC_GPIO,
+       .drv  = GPIOMUX_DRV_2MA,
+       .pull = GPIOMUX_PULL_NONE,
+       .dir = GPIOMUX_OUT_LOW,
+};
+
+static struct gpiomux_setting usb2_sw_en2_suspend_cfg = {
+       .func = GPIOMUX_FUNC_GPIO,
+       .drv = GPIOMUX_DRV_2MA,
+       .pull = GPIOMUX_PULL_DOWN,
+};
+#endif
 static struct gpiomux_setting ath_gpio_active_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
@@ -555,18 +627,20 @@ static struct gpiomux_setting hsic_hub_act_cfg = {
 	.dir = GPIOMUX_IN,
 };
 
+#if 0
 static struct gpiomux_setting hsic_resume_act_cfg = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
-	.dir = GPIOMUX_OUT_LOW,
+    .func = GPIOMUX_FUNC_GPIO,
+    .drv = GPIOMUX_DRV_2MA,
+    .pull = GPIOMUX_PULL_DOWN,
+    .dir = GPIOMUX_OUT_LOW,
 };
 
 static struct gpiomux_setting hsic_resume_susp_cfg = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_NONE,
+    .func = GPIOMUX_FUNC_GPIO,
+    .drv = GPIOMUX_DRV_2MA,
+    .pull = GPIOMUX_PULL_NONE,
 };
+#endif
 
 static struct msm_gpiomux_config msm_hsic_configs[] = {
 	{
@@ -583,13 +657,15 @@ static struct msm_gpiomux_config msm_hsic_configs[] = {
 			[GPIOMUX_SUSPENDED] = &hsic_sus_cfg,
 		},
 	},
-	{
-		.gpio = 80,
-		.settings = {
-			[GPIOMUX_ACTIVE] = &hsic_resume_act_cfg,
-			[GPIOMUX_SUSPENDED] = &hsic_resume_susp_cfg,
-		},
-	},
+#if 0
+    {
+        .gpio = 80,
+        .settings = {
+            [GPIOMUX_ACTIVE] = &hsic_resume_act_cfg,
+            [GPIOMUX_SUSPENDED] = &hsic_resume_susp_cfg,
+        },
+    },
+#endif
 };
 
 static struct msm_gpiomux_config msm_hsic_hub_configs[] = {
@@ -904,6 +980,43 @@ static struct msm_gpiomux_config msm_blsp_configs[] __initdata = {
 			[GPIOMUX_ACTIVE] = &gpio_i2c_act_config,
 		},
 	},
+#if 0 /* Deleted by audio */
+	{                           /* USB2_SW_EN2 */
+               .gpio      = 32,
+               .settings = {
+                       [GPIOMUX_ACTIVE] = &usb2_sw_en2_active_cfg,
+                       [GPIOMUX_SUSPENDED] = &usb2_sw_en2_suspend_cfg,
+               },
+	},
+	{                             /* USB2_SW_EN1 */
+	       .gpio      = 31,
+	       .settings = {
+	               [GPIOMUX_ACTIVE] = &usb2_sw_en1_active_cfg,
+	               [GPIOMUX_SUSPENDED] = &usb2_sw_en1_suspend_cfg,
+	       },
+	},
+#endif
+	{                             /* AUDIO_R_CMD_SW */
+	       .gpio      = 55,
+	       .settings = {
+	               [GPIOMUX_ACTIVE] = &audio_r_cmd_sw_active_cfg,
+	               [GPIOMUX_SUSPENDED] = &audio_r_cmd_sw_suspend_cfg,
+	       },
+	},
+	{                             /* AUDIO_MIC_CMD_SW */
+	       .gpio      = 57,
+	       .settings = {
+	               [GPIOMUX_ACTIVE] = &audio_mic_cmd_sw_active_cfg,
+	               [GPIOMUX_SUSPENDED] = &audio_mic_cmd_sw_suspend_cfg,
+	       },
+	},
+	{                             /* ANC_AUDIO_CMD */
+	       .gpio      = 89,
+	       .settings = {
+	               [GPIOMUX_ACTIVE] = &anc_audio_cmd_active_cfg,
+	               [GPIOMUX_SUSPENDED] = &anc_audio_cmd_suspend_cfg,
+	       },
+	},
 	{
 		.gpio      = 83,		/* BLSP11 QUP I2C_DAT */
 		.settings = {
@@ -967,6 +1080,7 @@ static struct msm_gpiomux_config msm_blsp_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gpio_suspend_config[0],
 		},
 	},
+#if 0 //gpio55 used for audio_r_cmd_sw
 	{
 		.gpio      = 55,		/* BLSP2 QUP4 SPI_CS0_N */
 		.settings = {
@@ -974,6 +1088,7 @@ static struct msm_gpiomux_config msm_blsp_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gpio_suspend_config[0],
 		},
 	},
+#endif
     {
 		.gpio      = 64,		/* TFA98xx reset test */
 		.settings = {
@@ -1189,6 +1304,7 @@ static struct msm_gpiomux_config msm_sensor_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gpio_suspend_config[1],
 		},
 	},
+#if 0 //gpio 89 used for anc_audio_cmd
 	{
 		.gpio = 89, /* CAM1_STANDBY_N */
 		.settings = {
@@ -1196,6 +1312,7 @@ static struct msm_gpiomux_config msm_sensor_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gpio_suspend_config[1],
 		},
 	},
+#endif
 	{
 		.gpio = 90, /* CAM1_RST_N */
 		.settings = {
@@ -1455,14 +1572,14 @@ static struct msm_gpiomux_config msm8974_sec_auxpcm_configs[] __initdata = {
 			[GPIOMUX_ACTIVE] = &auxpcm_act_cfg,
 		},
 	},
+    {
+        .gpio = 80,
+        .settings = {
+            [GPIOMUX_SUSPENDED] = &auxpcm_sus_cfg,
+            [GPIOMUX_ACTIVE] = &auxpcm_act_cfg,
+        },
+    },
 #endif
-	{
-		.gpio = 80,
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &auxpcm_sus_cfg,
-			[GPIOMUX_ACTIVE] = &auxpcm_act_cfg,
-		},
-	},
 	{
 		.gpio = 81,
 		.settings = {
@@ -1785,6 +1902,12 @@ static struct gpiomux_setting keypad_sus_cfg = {
 	.pull = GPIOMUX_PULL_UP,
 	.dir = GPIOMUX_IN,
 };
+static struct gpiomux_setting hall_irq_gpio_cfg = {
+    .func = GPIOMUX_FUNC_GPIO,
+    .drv = GPIOMUX_DRV_2MA,
+    .pull = GPIOMUX_PULL_UP,
+    .dir = GPIOMUX_IN,
+};
 static struct msm_gpiomux_config msm8974_keypad_configs[] __initdata = {
 	{
 		.gpio = 65,
@@ -1794,6 +1917,13 @@ static struct msm_gpiomux_config msm8974_keypad_configs[] __initdata = {
 		},
 	},
 
+    {
+        .gpio = 80,
+        .settings = {
+            [GPIOMUX_SUSPENDED] = &hall_irq_gpio_cfg,
+            [GPIOMUX_ACTIVE] = &hall_irq_gpio_cfg,
+        },
+    },
 };
 #endif
 
@@ -1903,6 +2033,29 @@ static struct msm_gpiomux_config msm8974_charge_config[] __initdata = {
 	},
 };
 
+static struct gpiomux_setting gpio_hw_ver_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	//.dir = GPIOMUX_IN,
+};
+
+static struct msm_gpiomux_config hw_ver_det_config[] __initdata = {
+	{
+		/* VER_GPIO0 */
+		.gpio      = 56,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gpio_hw_ver_config,
+		},
+	},
+	{
+		/* VER_GPIO1 */
+		.gpio      = 92,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gpio_hw_ver_config,
+		},
+	},
+};
 void __init msm_8974_init_gpiomux(void)
 {
 	int rc;
@@ -2000,6 +2153,8 @@ void __init msm_8974_init_gpiomux(void)
 	if (of_board_is_dragonboard() && machine_is_apq8074())
 		msm_gpiomux_install(apq8074_dragonboard_ts_config,
 			ARRAY_SIZE(apq8074_dragonboard_ts_config));
+    msm_gpiomux_install(hw_ver_det_config,
+        ARRAY_SIZE(hw_ver_det_config));
 #ifdef QUAT_MI2S_ENABLE
 		msm_gpiomux_install(msm8974_quat_mi2s_configs,
 			ARRAY_SIZE(msm8974_quat_mi2s_configs));

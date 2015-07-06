@@ -746,9 +746,9 @@ static void goodix_ts_work_func(struct work_struct *work)
 				}else
 				{
                 GTP_INFO("Double click to light up the screen!");
-                input_report_key(ts->input_dev, KEY_GESTURE_DT, 1);
+                input_report_key(ts->input_dev, KEY_POWER, 1);
                 input_sync(ts->input_dev);
-                input_report_key(ts->input_dev, KEY_GESTURE_DT, 0);
+                input_report_key(ts->input_dev, KEY_POWER, 0);
                 input_sync(ts->input_dev);
 				}
                 // clear 0x814B
@@ -961,7 +961,7 @@ static void goodix_ts_work_func(struct work_struct *work)
                 	input_report_key(ts->input_dev, touch_key_array[i], key_value & (0x01<<i));   */
                 }
 	    }
-            //touch_num = 0;  // shield fingers
+         //   touch_num = 0;  // shield fingers
         }
     #endif
     }
@@ -1165,7 +1165,7 @@ static irqreturn_t goodix_ts_irq_handler(int irq, void *dev_id)
     gtp_irq_disable(ts);
 	if(gtp_wakeup_flag && (doze_status == DOZE_ENABLED || doze_status == DOZE_WAKEUP))
 	{
-    queue_delayed_work(goodix_wq, &ts->work,50);
+    queue_delayed_work(goodix_wq, &ts->work,5);
 	}
 	else
     queue_delayed_work(goodix_wq, &ts->work,0);
