@@ -552,11 +552,8 @@ static int dwc3_otg_set_power(struct usb_phy *phy, unsigned mA)
 			dotg->charger->chg_type == DWC3_PROPRIETARY_CHARGER)
 		power_supply_type = POWER_SUPPLY_TYPE_USB_DCP;
 	else
-#ifdef CONFIG_BATTERY_BQ27530
-		power_supply_type = POWER_SUPPLY_TYPE_BATTERY;
-#else
 		power_supply_type = POWER_SUPPLY_TYPE_UNKNOWN;
-#endif
+
 	power_supply_set_supply_type(dotg->psy, power_supply_type);
 
 	if (dotg->charger->chg_type == DWC3_CDP_CHARGER)
@@ -721,11 +718,8 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 	case OTG_STATE_UNDEFINED:
 		dwc3_otg_init_sm(dotg);
 		if (!dotg->psy) {
-#ifdef CONFIG_BATTERY_BQ27530
-			dotg->psy = power_supply_get_by_name("usb_qpnp");
-#else
 			dotg->psy = power_supply_get_by_name("usb");
-#endif
+
 			if (!dotg->psy)
 				dev_err(phy->dev,
 					 "couldn't get usb power supply\n");
