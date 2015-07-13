@@ -83,10 +83,6 @@ static void *adsp_state_notifier;
 #define ADSP_STATE_READY_TIMEOUT_MS 50
 
 #ifdef CONFIG_MACH_SHENQI_K9
-#define QUAT_MI2S_ENABLE
-#endif
-
-#ifdef QUAT_MI2S_ENABLE
 extern int msm_q6_enable_mi2s_clocks(bool enable);
 static bool system_bootup = 1;
 #endif
@@ -119,13 +115,10 @@ static const struct soc_enum msm8974_auxpcm_enum[] = {
 		SOC_ENUM_SINGLE_EXT(2, auxpcm_rate_text),
 };
 
+#ifdef CONFIG_MACH_SHENQI_K9
+#define QUAT_MI2S_ENABLE
+
 #ifdef QUAT_MI2S_ENABLE
-
-static const char *const quat_mi2s_clk_text[] = {"Off", "On"};
-
-struct snd_soc_card snd_soc_card_msm8974 = {
-	.name		= "msm8974-taiko-snd-card",
-};
 
 atomic_t quat_mi2s_rsc_ref;
 atomic_t quat_mi2s_clk_ref;
@@ -164,6 +157,7 @@ static struct request_gpio quat_mi2s_gpio[] = {
         .gpio_name = "QUAT_MI2S_DATA1",
     },
 };
+#endif
 #endif
 
 void *def_taiko_mbhc_cal(void);
@@ -1102,14 +1096,6 @@ static int msm8974_auxpcm_rate_put(struct snd_kcontrol *kcontrol,
 	}
 	return 0;
 }
-
-static int quat_mi2s_clk_get(struct snd_kcontrol *kcontrol,
-	    struct snd_ctl_elem_value *ucontrol)
-{
-	ucontrol->value.integer.value[0] = atomic_read(&quat_mi2s_rsc_ref) >= 1;
-	    return 0;
-}
-
 static int msm_proxy_rx_ch_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
@@ -1479,9 +1465,6 @@ static const struct soc_enum msm_snd_enum[] = {
 	SOC_ENUM_SINGLE_EXT(3, slim0_rx_sample_rate_text),
 	SOC_ENUM_SINGLE_EXT(8, proxy_rx_ch_text),
 	SOC_ENUM_SINGLE_EXT(3, hdmi_rx_sample_rate_text),
-#ifdef QUAT_MI2S_ENABLE
-	SOC_ENUM_SINGLE_EXT(2, quat_mi2s_clk_text),
-#endif
 };
 
 static const struct snd_kcontrol_new msm_snd_controls[] = {
@@ -1507,10 +1490,6 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 		     msm_btsco_rate_get, msm_btsco_rate_put),
 	SOC_ENUM_EXT("HDMI_RX SampleRate", msm_snd_enum[7],
 			hdmi_rx_sample_rate_get, hdmi_rx_sample_rate_put),
-#ifdef QUAT_MI2S_ENABLE
-	SOC_ENUM_EXT("QUAT_MI2S Clock", msm_snd_enum[9],
-			quat_mi2s_clk_get, NULL),
-#endif
 };
 
 static bool msm8974_swap_gnd_mic(struct snd_soc_codec *codec)
@@ -1900,6 +1879,7 @@ static struct snd_soc_ops msm8974_be_ops = {
 	.shutdown = msm8974_snd_shudown,
 };
 
+#ifdef CONFIG_MACH_SHENQI_K9
 #ifdef QUAT_MI2S_ENABLE
 static int msm8974_quat_mi2s_free_gpios(void)
 {
@@ -1942,8 +1922,6 @@ static void msm8974_quat_mi2s_shutdown(struct snd_pcm_substream *substream)
 			}
 			msm8974_quat_mi2s_free_gpios();
 		}
-		snd_ctl_notify(snd_soc_card_msm8974.snd_card, SNDRV_CTL_EVENT_MASK_VALUE,
-			&snd_soc_card_get_kcontrol(&snd_soc_card_msm8974, "QUAT_MI2S Clock")->id);
 	}
 }
 
@@ -2033,10 +2011,6 @@ static int msm8974_quat_mi2s_startup(struct snd_pcm_substream *substream)
 			dev_err(codec_dai->dev, "set format for codec dai"
 					" failed\n");
 		ret  = 0;
-
-		pr_info("%s Quaternary MI2S Clock is Enabled\n", __func__);
-		snd_ctl_notify(snd_soc_card_msm8974.snd_card, SNDRV_CTL_EVENT_MASK_VALUE,
-			&snd_soc_card_get_kcontrol(&snd_soc_card_msm8974, "QUAT_MI2S Clock")->id);
 	}
 	return ret;
 }
@@ -2067,6 +2041,7 @@ static struct snd_soc_ops msm8974_quat_mi2s_be_ops = {
 	.shutdown = msm8974_quat_mi2s_shutdown
 
 };
+#endif
 #endif
 
 static int msm8974_slimbus_2_hw_params(struct snd_pcm_substream *substream,
@@ -2679,6 +2654,7 @@ static struct snd_soc_dai_link msm8974_common_dai_links[] = {
 		.codec_name = "snd-soc-dummy",
 		.be_id = MSM_FRONTEND_DAI_VOWLAN,
 	},
+#ifdef CONFIG_MACH_SHENQI_K9
 #ifdef QUAT_MI2S_ENABLE
 	{
 		.name = "MI2S_TX Hostless",
@@ -2695,6 +2671,7 @@ static struct snd_soc_dai_link msm8974_common_dai_links[] = {
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
 	},
+#endif
 #endif
 	/* Backend BT/FM DAI Links */
 	{
@@ -3000,6 +2977,7 @@ static struct snd_soc_dai_link msm8974_common_dai_links[] = {
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 	},
+#ifdef CONFIG_MACH_SHENQI_K9
 #ifdef QUAT_MI2S_ENABLE
 	{
 		.name = LPASS_BE_QUAT_MI2S_RX,
@@ -3026,6 +3004,7 @@ static struct snd_soc_dai_link msm8974_common_dai_links[] = {
 		.ops = &msm8974_quat_mi2s_be_ops,
 	},
 #endif
+#endif
 };
 
 static struct snd_soc_dai_link msm8974_hdmi_dai_link[] = {
@@ -3048,6 +3027,10 @@ static struct snd_soc_dai_link msm8974_hdmi_dai_link[] = {
 static struct snd_soc_dai_link msm8974_dai_links[
 					 ARRAY_SIZE(msm8974_common_dai_links) +
 					 ARRAY_SIZE(msm8974_hdmi_dai_link)];
+
+struct snd_soc_card snd_soc_card_msm8974 = {
+	.name		= "msm8974-taiko-snd-card",
+};
 
 static int msm8974_dtparse_auxpcm(struct platform_device *pdev,
 				struct msm_auxpcm_ctrl **auxpcm_ctrl,
@@ -3266,12 +3249,14 @@ static __devinit int msm8974_asoc_machine_probe(struct platform_device *pdev)
 	mutex_init(&cdc_mclk_mutex);
 	atomic_set(&prim_auxpcm_rsc_ref, 0);
 	atomic_set(&sec_auxpcm_rsc_ref, 0);
+#ifdef CONFIG_MACH_SHENQI_K9
 #ifdef QUAT_MI2S_ENABLE
 	if(system_bootup){
 		system_bootup = 0;
 		atomic_set(&quat_mi2s_rsc_ref, 0);
 		atomic_set(&quat_mi2s_clk_ref, 0);
 	}
+#endif
 #endif
 	spdev = pdev;
 	ext_spk_amp_regulator = NULL;
