@@ -16,6 +16,8 @@
 #include "OIS_head.h"
 #include "OIS_prog.h"
 #include "OIS_coef.h"
+#include "OIS_prog_lg.h"
+#include "OIS_coef_lg.h"
 #include "OIS_defi.h"
 //#include "usb_func.h"
 
@@ -68,6 +70,11 @@ OIS_UWORD 		u16_ofs_tbl[] = {						// RHM_HT 2013.03.13	[Improvement of Loop Gai
 // 					0xF043								// 19
 };
 // <== RHM_HT 2013/11/25	Modified
+static uint16_t sensor_module_id = 0;
+void	ois_set_sensor_module( uint16_t module_id ){
+	sensor_module_id = module_id;
+	pr_err("%s  sensor_module_id:%d\n", __func__ ,sensor_module_id);
+}
 
 //  *****************************************************
 //  **** Program Download Function
@@ -76,7 +83,10 @@ ADJ_STS		func_PROGRAM_DOWNLOAD( void ){	// RHM_HT 2013/04/15	Change "typedef" of
 
 	OIS_UWORD	sts;						// RHM_HT 2013/04/15	Change "typedef".
 	pr_err("%s \n", __func__ );
-	download( 0, 0 );
+	if(sensor_module_id == 0)
+		download( 0, 0 );
+	else
+		download_lg( 0, 0 );
 	if(1){
 	// Program Download
 	//msleep(1);
@@ -111,8 +121,10 @@ OIS_UWORD	KGNTG_VALUE;			// KgxTG / KgyTG		szx_2014/12/24_2
 OIS_UWORD	GYRSNS;					// RHM_HT 2015/01/16	Added
 
 void	func_COEF_DOWNLOAD( OIS_UWORD u16_coef_type ){
-
-	download( 1, u16_coef_type );			// COEF Download
+	if(sensor_module_id == 0)
+		download( 1, u16_coef_type );			// COEF Download
+	else
+		download_lg( 1, u16_coef_type );			// COEF Download
 
 	{
 		OIS_UWORD u16_dat;
@@ -128,14 +140,12 @@ void	func_COEF_DOWNLOAD( OIS_UWORD u16_coef_type ){
 }
 // <== RHM_HT 2013/11/26	Reverted
 
-
+// Data Transfer Size per one I2C access
+#define		DWNLD_TRNS_SIZE		(64)
 //  *****************************************************
 //  **** Download the data
 //  *****************************************************
 void	download( OIS_UWORD u16_type, OIS_UWORD u16_coef_type ){
-
-	// Data Transfer Size per one I2C access
-	#define		DWNLD_TRNS_SIZE		(64)
 	OIS_UBYTE	temp[DWNLD_TRNS_SIZE+1];
 	OIS_UWORD	block_cnt;
 	OIS_UWORD	total_cnt;
@@ -189,6 +199,62 @@ void	download( OIS_UWORD u16_type, OIS_UWORD u16_coef_type ){
 
 }
 
+//  *****************************************************
+//  **** Download the data
+//  *****************************************************
+void	download_lg( OIS_UWORD u16_type, OIS_UWORD u16_coef_type ){
+	OIS_UBYTE	temp[DWNLD_TRNS_SIZE+1];
+	OIS_UWORD	block_cnt;
+	OIS_UWORD	total_cnt;
+	OIS_UWORD	lp;
+	OIS_UWORD	n;
+	OIS_UWORD	u16_i;
+	if	( u16_type == 0 ){
+		n		= DOWNLOAD_LG_BIN_LEN;
+	}
+	else{
+		n = DOWNLOAD_LG_COEF_LEN;								// RHM_HT 2013/07/10	Modified
+	}
+	block_cnt	= n / DWNLD_TRNS_SIZE + 1;
+	total_cnt	= block_cnt;
+	pr_err("download lg +\n" );
+
+	while( 1 ){
+		// Residual Number Check
+		if( block_cnt == 1 ){
+			lp = n % DWNLD_TRNS_SIZE;
+		}
+		else{
+			lp = DWNLD_TRNS_SIZE;
+		}
+
+		// Transfer Data set
+		if( lp != 0 ){
+			if(	u16_type == 0 ){
+				temp[0] = _OP_FIRM_DWNLD;
+				for( u16_i = 1; u16_i <= lp; u16_i += 1 ){
+					temp[ u16_i ] = DOWNLOAD_LG_BIN[ ( total_cnt - block_cnt ) * DWNLD_TRNS_SIZE + u16_i - 1 ];
+				}
+
+			}
+			else{
+				temp[0] = _OP_COEF_DWNLD;
+				for( u16_i = 1; u16_i <= lp; u16_i += 1 ){
+					temp[u16_i] = DOWNLOAD_LG_COEF[(total_cnt - block_cnt) * DWNLD_TRNS_SIZE + u16_i -1];	// RHM_HT 2013/07/10	Modified
+				}
+			}
+			// Data Transfer
+			WR_I2C( _SLV_OIS_, lp + 1, temp );
+		}
+
+		// Block Counter Decrement
+		block_cnt = block_cnt - 1;
+		if( block_cnt == 0 ){
+			break;
+		}
+	}
+
+}
 
 int SET_FADJ_PARAM( const _FACT_ADJ *param )
 {

@@ -138,6 +138,7 @@ typedef struct tagApproxResult{
 ADJ_STS		func_PROGRAM_DOWNLOAD( void );												// RHM_HT 2013/04/15	Change "typedef" of return value
 void		func_COEF_DOWNLOAD( OIS_UWORD u16_coef_type );								// RHM_HT 2013/11/26	Reverted
 void		download( OIS_UWORD u16_type, OIS_UWORD u16_coef_type );
+void		download_lg( OIS_UWORD u16_type, OIS_UWORD u16_coef_type );
 
 ADJ_STS		func_SET_SCENE_PARAM(OIS_UBYTE u16_scene, OIS_UBYTE u16_mode, OIS_UBYTE filter, OIS_UBYTE range, const _FACT_ADJ *param );	// RHM_HT 2013/04/15	Change "typedef" of return value
 ADJ_STS		func_SET_SCENE_PARAM_for_NewGYRO_Fil(OIS_UBYTE u16_scene, OIS_UBYTE u16_mode, OIS_UBYTE filter, OIS_UBYTE range, const _FACT_ADJ *param );	// RHM_HT 2013/04/15	Change "typedef" of return value
@@ -156,13 +157,14 @@ OIS_UWORD	I2C_OIS_F0123__rd( void );
 //void		POWER_DOWN_AND_PS_ENABLE( void );
 void		VCOSET0( void );
 void		VCOSET1( void );
-int		WR_I2C( OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat );
+int		WR_I2C( OIS_UBYTE slvadr, OIS_UWORD size, OIS_UBYTE *dat );
 OIS_UWORD	RD_I2C( OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat );
 void		store_FADJ_MEM_to_non_volatile_memory( _FACT_ADJ param );
 _FACT_ADJ	get_FADJ_MEM_from_non_volatile_memory( void );
 //void		Wait_usec( OIS_ULONG time );
 int 		debug_print(const char *format, ...);					// RHM_HT 2013/04/15	Add for DEBUG
 void	rh63163_ois_enable( uint8_t ois_enable );
+void		ois_set_sensor_module( uint16_t module_id );
 //#define	DEBUG_FADJ
 #ifdef	DEBUG_FADJ
 // 	#define	DEBUG_printf(a)		printf a

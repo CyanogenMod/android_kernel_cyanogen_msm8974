@@ -769,6 +769,7 @@ static int32_t msm_actuator_config(struct msm_actuator_ctrl_t *a_ctrl,
 #ifdef RHM_OIS_ACTUATOR
 	case CFG_SET_ACTUATOR_OIS_INIT:
 		actuator_ctrl = a_ctrl;
+		ois_set_sensor_module(cdata->cfg.cam_name);
 		rh63163_init();
 		break;
 #endif

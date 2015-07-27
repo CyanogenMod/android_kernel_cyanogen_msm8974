@@ -35,26 +35,26 @@ OIS_UWORD			FOCUS_VAL	= 0x0122;				// Focus Value
  _FACT_ADJ	FADJ_MEM
 
 = {
-	0x0201,	// gl_CURDAT;
-	0x0200,	// gl_HALOFS_X;
-	0x0200,	// gl_HALOFS_Y;
-	0x0000,	// gl_HX_OFS;
-	0x0000,	// gl_HY_OFS;
-	0x0080,	// gl_PSTXOF;		RHM_HT 2013.03.21	Change order to adjust EEP ROM map
-	0x0080,	// gl_PSTYOF;		RHM_HT 2013.03.21	Change order to adjust EEP ROM map
-	0x0000,	// gl_GX_OFS;
-	0x0000,	// gl_GY_OFS;
+	0x1cf,	// gl_CURDAT;
+	0x1be,	// gl_HALOFS_X;
+	0x1eb,	// gl_HALOFS_Y;
+	0x36,	// gl_HX_OFS;
+	0xfff2,	// gl_HY_OFS;
+	0x80,	// gl_PSTXOF;		RHM_HT 2013.03.21	Change order to adjust EEP ROM map
+	0x81,	// gl_PSTYOF;		RHM_HT 2013.03.21	Change order to adjust EEP ROM map
+	0xf5,	// gl_GX_OFS;
+	0x31a,	// gl_GY_OFS;
 
-	0x2000,	// gl_KgxHG ;		RHM_HT 2013/11/25	Modified
-	0x2000,	// gl_KgyHG ;		RHM_HT 2013/11/25	Modified
-	0x2000,	// gl_KGXG  ;		RHM_HT 2013/11/25	Modified
-	0x2000,	// gl_KGYG  ;		RHM_HT 2013/11/25	Modified
-	0x0200,	// gl_SFTHAL_X;		RHM_HT 2013/11/25	Added
-	0x0200,	// gl_SFTHAL_Y;		RHM_HT 2013/11/25	Added
+	0xdb44,	// gl_KgxHG ;		RHM_HT 2013/11/25	Modified
+	0xde35,	// gl_KgyHG ;		RHM_HT 2013/11/25	Modified
+	0x2eca,	// gl_KGXG  ;		RHM_HT 2013/11/25	Modified
+	0x29c8,	// gl_KGYG  ;		RHM_HT 2013/11/25	Modified
+	0x1be,	// gl_SFTHAL_X;		RHM_HT 2013/11/25	Added
+	0x1eb,	// gl_SFTHAL_Y;		RHM_HT 2013/11/25	Added
 	0x0000,	// gl_TMP_X_;		RHM_HT 2013/11/25	Added
 	0x0000,	// gl_TMP_Y_;		RHM_HT 2013/11/25	Added
-	0x0000,	// gl_KgxH0;		RHM_HT 2013/11/25	Added
-	0x0000,	// gl_KgyH0;		RHM_HT 2013/11/25	Added
+	0xff95,	// gl_KgxH0;		RHM_HT 2013/11/25	Added
+	0x32,	// gl_KgyH0;		RHM_HT 2013/11/25	Added
 };
 
 // *********************************************************
@@ -291,7 +291,7 @@ void	VCOSET1( void )
 //		[S][SlaveAdr][W]+[dat[0]]+...+[dat[size-1]][P]
 
 // =========================================================
-int	WR_I2C( OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat )
+int	WR_I2C( OIS_UBYTE slvadr, OIS_UWORD size, OIS_UBYTE *dat )
 {
 	int rc = -1;
 	actuator_ctrl->i2c_client.addr_type = 1;//MSM_CAMERA_I2C_WORD_BYTE
