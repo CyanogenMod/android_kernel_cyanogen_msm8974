@@ -33,6 +33,9 @@ static void dwc3_otg_reset(struct dwc3_otg *dotg);
 
 static void dwc3_otg_notify_host_mode(struct usb_otg *otg, int host_mode);
 static void dwc3_otg_reset(struct dwc3_otg *dotg);
+#ifdef CONFIG_BATTERY_BQ27530
+extern void bq24192_update_chrg_type(int type);
+#endif
 
 /**
  * dwc3_otg_set_host_regs - reset dwc3 otg registers to host operation.
@@ -563,6 +566,11 @@ static int dwc3_otg_set_power(struct usb_phy *phy, unsigned mA)
 		return 0;
 
 	dev_info(phy->dev, "Avail curr from USB = %u\n", mA);
+
+#ifdef CONFIG_BATTERY_BQ27530
+	bq24192_update_chrg_type(power_supply_type == POWER_SUPPLY_TYPE_UNKNOWN ?
+			POWER_SUPPLY_TYPE_BATTERY : power_supply_type);
+#endif
 
 	if (dotg->charger->max_power <= 2 && mA > 2) {
 		/* Enable charging */

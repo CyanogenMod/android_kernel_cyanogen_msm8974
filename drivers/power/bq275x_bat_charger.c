@@ -244,7 +244,6 @@ struct bq27x00_device_info {
 	struct device 		*dev;
     struct bq27530_platform_data *board;
 	struct regulator *vcc_i2c;
-	struct power_supply	*usb_psy;
 	int			id;
 
 	struct bq27x00_reg_cache cache;
@@ -1492,18 +1491,6 @@ static int bq27x00_battery_get_property(struct power_supply *psy,
 	return ret;
 }
 
-static void bq27x00_external_power_changed(struct power_supply *psy)
-{
-	struct bq27x00_device_info *di;
-	int type;
-
-	di = to_bq27x00_device_info(psy);
-	type = di->usb_psy->type;
-	if (type == POWER_SUPPLY_TYPE_UNKNOWN)
-		type = POWER_SUPPLY_TYPE_BATTERY;
-	bq24192_update_chrg_type(type);
-}
-
 int fw_ver_get(struct bq27x00_device_info *di)
 {
 	int ret;
@@ -2291,17 +2278,9 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 	di->id = num;
 	di->dev = &client->dev;
 	di->bat.name = "battery";
-	di->bat.external_power_changed = bq27x00_external_power_changed;
 	di->bus.read = &bq27x00_read_i2c;
   	di->board = platform_data;
   	di->board->chg_current = CURRENT_UNDEFINE;
-
-	di->usb_psy = power_supply_get_by_name("usb");
-	if (!di->usb_psy) {
-		pr_err("usb supply not found, deferring probe\n");
-		retval = -EPROBE_DEFER;
-		goto batt_failed_3;
-	}
 
 	di->is_suspend = 0;
 	di->is_rom_mode = 0;
