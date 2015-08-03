@@ -17,33 +17,50 @@
 	qcom,leds@d000 {
 	  compatible = "qcom,leds-qpnp-shenqi-k9";
 		qcom,rgb_0 {
-			qcom,duty-ms=<500>;
+			qcom,duty-ms=<200>;
 			qcom,start-idx=<1>;
-			qcom,idx-len=<29>;
-			qcom,duty-pcts=[00 12 24 36 48 63 63 63 48 36 24 12 00 00 00 00 00 00 00 00 00 00 00 00 00];
-			qcom,duty-pcts1=[16];
-			qcom,pause-lo = <3000>;
+			qcom,duty-pcts=[00 00 00 00 00 00 00 00 00 00 00
+				01 03 05 08 0B 10 14 19 1E 24 2A
+				30 38 40 49 52 5B 64 64
+				64 64 64 5B 52 49 40 38 30
+				2A 24 1E 19 14 10 0B 08 05 03 01
+				00 00 00 00 00 00 00 00 00 00 00];
+			qcom,pause-lo = <0>;
+			qcom,pause-hi = <0>;
+			qcom,ramp-step-ms = <50>;
+			qcom,use-blink;
 			/delete-property/ linux,default-trigger;
 		};
 
 		qcom,rgb_1 {
-			qcom,duty-ms=<500>;
+			qcom,duty-ms=<200>;
 			qcom,start-idx=<1>;
-			qcom,idx-len=<29>;
-			qcom,duty-pcts=[00 12 24 36 48 63 63 63 48 36 24 12 00 00 00 00 00 00 00 00 00 00 00 00 00];
-			qcom,duty-pcts1=[17];
-			qcom,pause-lo = <3000>;
+			qcom,duty-pcts=[00 00 00 00 00 00 00 00 00 00 00
+				01 03 05 08 0B 10 14 19 1E 24 2A
+				30 38 40 49 52 5B 64 64
+				64 64 64 5B 52 49 40 38 30
+				2A 24 1E 19 14 10 0B 08 05 03 01
+				00 00 00 00 00 00 00 00 00 00 00];
+			qcom,pause-lo = <0>;
+			qcom,pause-hi = <0>;
+			qcom,ramp-step-ms = <50>;
+			qcom,use-blink;
 			/delete-property/ linux,default-trigger;
 		};
 
 		qcom,rgb_2 {
-			qcom,duty-ms=<500>;
-			/delete-property/ qcom,ramp-step-ms;
+			qcom,duty-ms=<200>;
 			qcom,start-idx=<1>;
-			qcom,idx-len=<29>;
-			qcom,duty-pcts=[00 12 24 36 48 63 63 63 48 36 24 12 00 00 00 00 00 00 00 00 00 00 00 00 00];
-			qcom,duty-pcts1=[18];
-			qcom,pause-lo = <3000>;
+			qcom,duty-pcts=[00 00 00 00 00 00 00 00 00 00 00
+				01 03 05 08 0B 10 14 19 1E 24 2A
+				30 38 40 49 52 5B 64 64
+				64 64 64 5B 52 49 40 38 30
+				2A 24 1E 19 14 10 0B 08 05 03 01
+				00 00 00 00 00 00 00 00 00 00 00];
+			qcom,pause-lo = <0>;
+			qcom,pause-hi = <0>;
+			qcom,ramp-step-ms = <50>;
+			qcom,use-blink;
 		};
 	};
 
@@ -88,46 +105,6 @@
 		label = "vibrator";
 		qcom,vib-timeout-ms = <15000>;
 		qcom,vib-vtg-level-mV = <3100>;
-	};
-
-	qcom,leds@d800 {
-		status = "disabled";
-	};
-
-	qcom,leds@d900 {
-		status = "disabled";
-	};
-
-	qcom,leds@da00 {
-		status = "disabled";
-	};
-
-	qcom,leds@db00 {
-		status = "disabled";
-	};
-
-	qcom,leds@dc00 {
-		status = "disabled";
-	};
-
-	qcom,leds@dd00 {
-		status = "disabled";
-	};
-
-	qcom,leds@de00 {
-		status = "disabled";
-	};
-
-	qcom,leds@df00 {
-		status = "disabled";
-	};
-
-	qcom,leds@e000 {
-		status = "disabled";
-	};
-
-	qcom,leds@e100 {
-		status = "disabled";
 	};
 
 	qcom,leds@e200 {
