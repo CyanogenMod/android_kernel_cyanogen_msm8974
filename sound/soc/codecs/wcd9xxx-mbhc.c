@@ -3112,6 +3112,22 @@ static void wcd9xxx_correct_swch_plug(struct work_struct *work)
 			}
 		} else if (plug_type == PLUG_TYPE_HEADPHONE) {
 			pr_debug("Good headphone detected, continue polling\n");
+#ifdef CONFIG_MACH_SHENQI_K9 /* For workground */
+			pt_gnd_mic_swap_cnt++;
+			if (mbhc->mbhc_cfg->swap_gnd_mic) {
+				/*
+				* if switch is toggled, check again,
+				* otherwise report unsupported plug
+				*/
+				if (pt_gnd_mic_swap_cnt < 3) {
+					printk(KERN_DEBUG "Try to swap GND MIC\n");
+					mbhc->mbhc_cfg->swap_gnd_mic(codec);
+					continue;
+				}
+				printk(KERN_DEBUG "%s: pt_gnd_mic_swap_cnt=%d\n",
+					__func__, pt_gnd_mic_swap_cnt);
+			}
+#endif
 			WCD9XXX_BCL_LOCK(mbhc->resmgr);
 			if (mbhc->mbhc_cfg->detect_extn_cable) {
 				if (mbhc->current_plug != plug_type)
