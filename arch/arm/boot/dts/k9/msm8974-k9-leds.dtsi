@@ -17,49 +17,38 @@
 	qcom,leds@d000 {
 	  compatible = "qcom,leds-qpnp-shenqi-k9";
 		qcom,rgb_0 {
-			qcom,duty-ms=<200>;
-			qcom,start-idx=<1>;
-			qcom,duty-pcts=[00 00 00 00 00 00 00 00 00 00 00
-				01 03 05 08 0B 10 14 19 1E 24 2A
-				30 38 40 49 52 5B 64 64
-				64 64 64 5B 52 49 40 38 30
-				2A 24 1E 19 14 10 0B 08 05 03 01
-				00 00 00 00 00 00 00 00 00 00 00];
-			qcom,pause-lo = <0>;
-			qcom,pause-hi = <0>;
+			qcom,start-idx=<0>;
+			qcom,duty-pcts=[ 00 0E 1C 2A 38 46 54 64 ];
+			qcom,pause-lo = <500>;
+			qcom,pause-hi = <500>;
 			qcom,ramp-step-ms = <50>;
+			qcom,lut-flags = <31>; /*  loop, ramp up, reverse, pause hi, pause lo */
 			qcom,use-blink;
-			/delete-property/ linux,default-trigger;
+			linux,default-trigger = "none";
+			qcom,use-blink;
 		};
 
 		qcom,rgb_1 {
-			qcom,duty-ms=<200>;
-			qcom,start-idx=<1>;
-			qcom,duty-pcts=[00 00 00 00 00 00 00 00 00 00 00
-				01 03 05 08 0B 10 14 19 1E 24 2A
-				30 38 40 49 52 5B 64 64
-				64 64 64 5B 52 49 40 38 30
-				2A 24 1E 19 14 10 0B 08 05 03 01
-				00 00 00 00 00 00 00 00 00 00 00];
-			qcom,pause-lo = <0>;
-			qcom,pause-hi = <0>;
+			qcom,start-idx=<8>;
+			qcom,duty-pcts=[ 00 0E 1C 2A 38 46 54 64 ];
+			qcom,pause-lo = <500>;
+			qcom,pause-hi = <500>;
 			qcom,ramp-step-ms = <50>;
+			qcom,lut-flags = <31>; /*  loop, ramp up, reverse, pause hi, pause lo */
 			qcom,use-blink;
-			/delete-property/ linux,default-trigger;
+			linux,default-trigger = "none";
+			qcom,use-blink;
 		};
 
 		qcom,rgb_2 {
-			qcom,duty-ms=<200>;
-			qcom,start-idx=<1>;
-			qcom,duty-pcts=[00 00 00 00 00 00 00 00 00 00 00
-				01 03 05 08 0B 10 14 19 1E 24 2A
-				30 38 40 49 52 5B 64 64
-				64 64 64 5B 52 49 40 38 30
-				2A 24 1E 19 14 10 0B 08 05 03 01
-				00 00 00 00 00 00 00 00 00 00 00];
-			qcom,pause-lo = <0>;
-			qcom,pause-hi = <0>;
+			qcom,start-idx=<16>;
+			qcom,duty-pcts=[ 00 0E 1C 2A 38 46 54 64 ];
+			qcom,pause-lo = <500>;
+			qcom,pause-hi = <500>;
 			qcom,ramp-step-ms = <50>;
+			qcom,lut-flags = <31>; /*  loop, ramp up, reverse, pause hi, pause lo */
+			qcom,use-blink;
+			linux,default-trigger = "none";
 			qcom,use-blink;
 		};
 	};
