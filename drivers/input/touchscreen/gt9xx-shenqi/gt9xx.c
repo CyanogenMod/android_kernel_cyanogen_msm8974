@@ -67,7 +67,7 @@ struct i2c_client * i2c_connect_client = NULL;
 #define MAX_BUTTONS		4
 #define PROP_NAME_SIZE		24
 #define RESET_DELAY_T3_US	200	/* T3: > 100us */
-#define RESET_DELAY_T4 10
+#define RESET_DELAY_T4 6
 #define GTP_I2C_ADDRESS_HIGH	0x14
 #define GTP_I2C_ADDRESS_LOW	0x5D
 u8 config[GTP_CONFIG_MAX_LENGTH + GTP_ADDR_LENGTH]
@@ -85,6 +85,8 @@ u8 config[GTP_CONFIG_MAX_LENGTH + GTP_ADDR_LENGTH]
     
 #endif
 
+static int rst_flag = 0;
+static int in_resume = 0;
 int goodix_suspend_flag = 0;
 static s8 gtp_i2c_test(struct i2c_client *client);
 void gtp_reset_guitar(struct i2c_client *client, s32 ms);
@@ -199,6 +201,8 @@ s32 gtp_i2c_read(struct i2c_client *client, u8 *buf, s32 len)
     s32 ret=-1;
     s32 retries = 0;
 
+	if(rst_flag)
+		return rst_flag;
     GTP_DEBUG_FUNC();
 
     msgs[0].flags = !I2C_M_RD;
@@ -213,13 +217,13 @@ s32 gtp_i2c_read(struct i2c_client *client, u8 *buf, s32 len)
     msgs[1].buf   = &buf[GTP_ADDR_LENGTH];
     //msgs[1].scl_rate = 300 * 1000;
 
-    while(retries < 5)
+    while(retries < 2)
     {
         ret = i2c_transfer(client->adapter, msgs, 2);
         if(ret == 2)break;
         retries++;
     }
-    if((retries >= 5))
+    if((retries >= 2))
     {
     #if GTP_COMPATIBLE_MODE
         struct goodix_ts_data *ts = i2c_get_clientdata(client);
@@ -269,19 +273,21 @@ s32 gtp_i2c_write(struct i2c_client *client,u8 *buf,s32 len)
 
     GTP_DEBUG_FUNC();
 
+	if(rst_flag)
+		return rst_flag;
     msg.flags = !I2C_M_RD;
     msg.addr  = client->addr;
     msg.len   = len;
     msg.buf   = buf;
     //msg.scl_rate = 300 * 1000;    // for Rockchip, etc
 
-    while(retries < 5)
+    while(retries < 2)
     {
         ret = i2c_transfer(client->adapter, &msg, 1);
         if (ret == 1)break;
         retries++;
     }
-    if((retries >= 5))
+    if((retries >= 2))
     {
     #if GTP_COMPATIBLE_MODE
         struct goodix_ts_data *ts = i2c_get_clientdata(client);
@@ -1163,7 +1169,7 @@ static irqreturn_t goodix_ts_irq_handler(int irq, void *dev_id)
 
     GTP_DEBUG_FUNC();
     gtp_irq_disable(ts);
-	if(gtp_wakeup_flag && (doze_status == DOZE_ENABLED || doze_status == DOZE_WAKEUP))
+	if(gtp_wakeup_flag && (doze_status == DOZE_ENABLED))
 	{
     queue_delayed_work(goodix_wq, &ts->work,5);
 	}
@@ -1199,6 +1205,11 @@ Output:
 void gtp_reset_guitar(struct i2c_client *client, s32 ms)
 {
     struct goodix_ts_data *ts = i2c_get_clientdata(client);
+	GTP_DEBUG_FUNC();
+	if(rst_flag)
+		return;
+	rst_flag = 1;
+
 	//GTP_DEBUG("%s\n",__func__);
 	/* This reset sequence will selcet I2C slave address */
 	if(ts->enter_update)
@@ -1230,6 +1241,7 @@ void gtp_reset_guitar(struct i2c_client *client, s32 ms)
 #if GTP_ESD_PROTECT
     gtp_init_ext_watchdog(client);
 #endif
+	rst_flag = 0;
 }
 
 #if GTP_GESTURE_WAKEUP
@@ -1250,7 +1262,7 @@ static s8 gtp_enter_doze(struct goodix_ts_data *ts)
     GTP_DEBUG_FUNC();
 
 //    GTP_DEBUG("Entering gesture mode.");
-    while(retry++ < 5)
+    while(retry++ < 3)
     {
         i2c_control_buf[0] = 0x80;
         i2c_control_buf[1] = 0x46;
@@ -1410,7 +1422,7 @@ static s8 gtp_wakeup_sleep(struct goodix_ts_data * ts)
     	return 1;    
     }
 #else
-    while(retry++ < 10)
+    while(retry++ < 3)
     {
     #if GTP_GESTURE_WAKEUP
 		if(gtp_wakeup_flag)
@@ -1423,16 +1435,18 @@ static s8 gtp_wakeup_sleep(struct goodix_ts_data * ts)
         {
             GTP_INFO("%s,Gesture wakeup.",__func__);
         }
-      //  doze_status = DOZE_DISABLED;
-      //  gtp_irq_disable(ts);
+        doze_status = DOZE_DISABLED;
+        gtp_irq_disable(ts);
         gtp_reset_guitar(ts->client, 10);
-       // gtp_irq_enable(ts);
+        gtp_irq_enable(ts);
 		}else
 		{
 		GTP_DEBUG("%s,powerkey wakeup",__func__);
+        gtp_irq_disable(ts);
 		gtp_reset_guitar(ts->client, 15);
+        gtp_irq_enable(ts);
         //GTP_GPIO_OUTPUT(ts->pdata->irq_gpio, 1);
-       // msleep(5);
+		//msleep(5);
 		}
     #else
 		GTP_DEBUG("%s,powerkey wakeup",__func__);
@@ -2106,7 +2120,7 @@ static s8 gtp_i2c_test(struct i2c_client *client)
   
     GTP_DEBUG_FUNC();
   
-    while(retry++ < 5)
+    while(retry++ < 2)
     {
         ret = gtp_i2c_read(client, test, 3);
         if (ret > 0)
@@ -3737,6 +3751,7 @@ static void goodix_ts_resume(struct goodix_ts_data *ts)
 {
 	int ret = -1;
 
+	in_resume = 1;
 		mutex_lock(&ts->lock);
 	  GTP_DEBUG_FUNC();
 #if 1 //yangjq, 20140711, Revert ldo6 and ldo17's turn off for modem issue
@@ -3788,6 +3803,7 @@ static void goodix_ts_resume(struct goodix_ts_data *ts)
     gtp_esd_switch(ts->client, SWITCH_ON);
 #endif
 	mutex_unlock(&ts->lock);
+	in_resume = 0;
 }
 
 #if defined(CONFIG_FB)
@@ -3857,6 +3873,8 @@ s32 gtp_i2c_read_no_rst(struct i2c_client *client, u8 *buf, s32 len)
     s32 ret=-1;
     s32 retries = 0;
 
+	if(rst_flag)
+		return rst_flag;
     GTP_DEBUG_FUNC();
 
     msgs[0].flags = !I2C_M_RD;
@@ -3871,13 +3889,13 @@ s32 gtp_i2c_read_no_rst(struct i2c_client *client, u8 *buf, s32 len)
     msgs[1].buf   = &buf[GTP_ADDR_LENGTH];
     //msgs[1].scl_rate = 300 * 1000;
 
-    while(retries < 5)
+    while(retries < 2)
     {
         ret = i2c_transfer(client->adapter, msgs, 2);
         if(ret == 2)break;
         retries++;
     }
-    if ((retries >= 5))
+    if ((retries >= 2))
     {    
         GTP_ERROR("I2C Read: 0x%04X, %d bytes failed, errcode: %d!", (((u16)(buf[0] << 8)) | buf[1]), len-2, ret);
     }
@@ -3892,19 +3910,21 @@ s32 gtp_i2c_write_no_rst(struct i2c_client *client,u8 *buf,s32 len)
 
     GTP_DEBUG_FUNC();
 
+	if(rst_flag)
+		return rst_flag;
     msg.flags = !I2C_M_RD;
     msg.addr  = client->addr;
     msg.len   = len;
     msg.buf   = buf;
     //msg.scl_rate = 300 * 1000;    // for Rockchip, etc
 
-    while(retries < 5)
+    while(retries < 2)
     {
         ret = i2c_transfer(client->adapter, &msg, 1);
         if (ret == 1)break;
         retries++;
     }
-    if((retries >= 5))
+    if((retries >= 2))
     {
         GTP_ERROR("I2C Write: 0x%04X, %d bytes failed, errcode: %d!", (((u16)(buf[0] << 8)) | buf[1]), len-2, ret);
     }
