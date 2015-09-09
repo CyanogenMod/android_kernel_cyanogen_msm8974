@@ -90,7 +90,11 @@
 #define DEFAULT_DCE_WAIT 60000
 #define DEFAULT_STA_WAIT 5000
 
+#ifdef CONFIG_MACH_SHENQI_K9
+#define VDDIO_MICBIAS_MV 2700
+#else
 #define VDDIO_MICBIAS_MV 1800
+#endif
 
 #define WCD9XXX_MICBIAS_PULLDOWN_SETTLE_US 5000
 
@@ -124,8 +128,13 @@
 /* RX_HPH_CNP_WG_TIME increases by 0.24ms */
 #define WCD9XXX_WG_TIME_FACTOR_US	240
 
+#ifdef CONFIG_MACH_SHENQI_K9
+#define WCD9XXX_V_CS_HS_MAX 2500
+#define WCD9XXX_V_CS_NO_MIC 30
+#else
 #define WCD9XXX_V_CS_HS_MAX 500
 #define WCD9XXX_V_CS_NO_MIC 5
+#endif
 #define WCD9XXX_MB_MEAS_DELTA_MAX_MV 80
 #ifdef CONFIG_MACH_SHENQI_K9
 #define WCD9XXX_CS_MEAS_DELTA_MAX_MV 14
@@ -3427,6 +3436,30 @@ static int wcd9xxx_determine_button(const struct wcd9xxx_mbhc *mbhc,
 static int wcd9xxx_get_button_mask(const int btn)
 {
 	int mask = 0;
+#ifdef CONFIG_MACH_SHENQI_K9
+	switch (btn) {
+	case 0:
+	case 1:
+		mask = SND_JACK_BTN_0;
+		break;
+	case 2:
+		mask = SND_JACK_BTN_5;
+		break;
+	case 3:
+		mask = SND_JACK_BTN_0;
+		break;
+	case 4:
+		mask = SND_JACK_BTN_4;
+		break;
+	case 5:
+	case 6:
+		mask = SND_JACK_BTN_5;
+		break;
+	case 7:
+		mask = SND_JACK_BTN_7;
+		break;
+	}
+#else
 	switch (btn) {
 	case 0:
 		mask = SND_JACK_BTN_0;
@@ -3453,6 +3486,7 @@ static int wcd9xxx_get_button_mask(const int btn)
 		mask = SND_JACK_BTN_7;
 		break;
 	}
+#endif
 	return mask;
 }
 
@@ -5032,6 +5066,24 @@ int wcd9xxx_mbhc_init(struct wcd9xxx_mbhc *mbhc, struct wcd9xxx_resmgr *resmgr,
 			return ret;
 		}
 
+#ifdef CONFIG_MACH_SHENQI_K9
+		ret = snd_jack_set_key(mbhc->button_jack.jack,
+					   SND_JACK_BTN_5,
+					   KEY_VOLUMEUP);
+		if (ret) {
+			pr_err("%s: Failed to set code for btn-5\n",
+				__func__);
+			return ret;
+		}
+		ret = snd_jack_set_key(mbhc->button_jack.jack,
+				       SND_JACK_BTN_7,
+				       KEY_VOLUMEDOWN);
+		if (ret) {
+			pr_err("%s: Failed to set code for btn-0\n",
+				__func__);
+			return ret;
+		}
+#endif
 		INIT_DELAYED_WORK(&mbhc->mbhc_firmware_dwork,
 				  wcd9xxx_mbhc_fw_read);
 		INIT_DELAYED_WORK(&mbhc->mbhc_btn_dwork, wcd9xxx_btn_lpress_fn);
