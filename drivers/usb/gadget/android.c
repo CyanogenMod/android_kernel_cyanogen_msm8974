@@ -2824,6 +2824,17 @@ static void android_resume(struct usb_gadget *gadget)
 	composite_resume(gadget);
 }
 
+#ifdef CONFIG_MACH_SHENQI_K9
+static ssize_t usb_speed_show(struct device *dev,
+                struct device_attribute *attr, char *buf)
+{
+        struct android_dev *android_dev = dev_get_drvdata(dev);
+        struct usb_gadget *gadget = android_dev->cdev->gadget;
+        return snprintf(buf, PAGE_SIZE,usb_speed_string(gadget->speed));
+}
+
+static DEVICE_ATTR(iSpeed, S_IRUGO | S_IWUSR, usb_speed_show,NULL);
+#endif
 
 static int android_create_device(struct android_dev *dev, u8 usb_core_id)
 {
@@ -2852,6 +2863,9 @@ static int android_create_device(struct android_dev *dev, u8 usb_core_id)
 			return err;
 		}
 	}
+#ifdef CONFIG_MACH_SHENQI_K9
+        err = device_create_file(dev->dev, &dev_attr_iSpeed);
+#endif
 	return 0;
 }
 
