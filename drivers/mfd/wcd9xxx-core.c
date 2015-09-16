@@ -418,7 +418,9 @@ static void wcd9xxx_free_reset(struct wcd9xxx *wcd9xxx)
 		wcd9xxx->reset_gpio = 0;
 	}
 }
-
+#ifdef CONFIG_WCD9XXX_CODEC_CODECID
+static char read_codecid[16]="Invalid ID";
+#endif
 static const struct wcd9xxx_codec_type
 *wcd9xxx_check_codec_type(struct wcd9xxx *wcd9xxx, u8 *version)
 {
@@ -483,6 +485,9 @@ static const struct wcd9xxx_codec_type
 			 "%s: detected %s, major 0x%x, minor 0x%x, ver 0x%x\n",
 			 __func__, d->dev->name, d->id_major, d->id_minor,
 			 *version);
+#ifdef CONFIG_WCD9XXX_CODEC_CODECID
+		strncpy(read_codecid,d->dev->name,sizeof(read_codecid));
+#endif
 	}
 exit:
 	return d;
@@ -654,6 +659,9 @@ struct wcd9xxx *debugCodec;
 static struct dentry *debugfs_wcd9xxx_dent;
 static struct dentry *debugfs_peek;
 static struct dentry *debugfs_poke;
+#ifdef CONFIG_WCD9XXX_CODEC_CODECID
+static struct dentry *debugfs_codecid;
+#endif
 
 static unsigned char read_data;
 
@@ -662,6 +670,18 @@ static int codec_debug_open(struct inode *inode, struct file *file)
 	file->private_data = inode->i_private;
 	return 0;
 }
+
+#ifdef CONFIG_WCD9XXX_CODEC_CODECID
+static ssize_t codecid_debug_read(struct file *file, char __user *ubuf,
+				size_t count, loff_t *ppos)
+{
+	char lbuf[16];
+
+	snprintf(lbuf, sizeof(lbuf), "%s\n", read_codecid);
+	return simple_read_from_buffer(ubuf, count, ppos, lbuf,
+		strnlen(lbuf, 16));
+}
+#endif
 
 static int get_parameters(char *buf, long int *param1, int num_of_par)
 {
@@ -747,6 +767,13 @@ static const struct file_operations codec_debug_ops = {
 	.write = codec_debug_write,
 	.read = codec_debug_read
 };
+
+#ifdef CONFIG_WCD9XXX_CODEC_CODECID
+static const struct file_operations codecid_debug_ops = {
+	.open = codec_debug_open,
+	.read = codecid_debug_read
+};
+#endif
 #endif
 
 static int wcd9xxx_init_supplies(struct wcd9xxx *wcd9xxx,
@@ -1629,6 +1656,12 @@ static int wcd9xxx_slim_probe(struct slim_device *slim)
 		debugfs_poke = debugfs_create_file("poke",
 		S_IFREG | S_IRUGO, debugfs_wcd9xxx_dent,
 		(void *) "poke", &codec_debug_ops);
+
+#ifdef CONFIG_WCD9XXX_CODEC_CODECID
+        debugfs_codecid = debugfs_create_file("codecid",
+		S_IFREG | S_IRUGO, debugfs_wcd9xxx_dent,
+		(void *) "codecid", &codecid_debug_ops);
+#endif
 	}
 #endif
 
