@@ -276,6 +276,7 @@ obj-$(CONFIG_ARCH_APQ8084) += board-8084.o board-8084-gpiomux.o
 obj-$(CONFIG_ARCH_APQ8084) += clock-8084.o
 ifdef CONFIG_MACH_SHENQI_K9
 obj-$(CONFIG_MACH_SHENQI_K9) += k9/
+obj-$(CONFIG_MSM_SECBOOT) += msm_secboot.o
 else
 obj-$(CONFIG_ARCH_MSM8974) += board-8974.o board-8974-gpiomux.o
 obj-$(CONFIG_ARCH_MSM8974) += clock-krait-8974.o clock-8974.o

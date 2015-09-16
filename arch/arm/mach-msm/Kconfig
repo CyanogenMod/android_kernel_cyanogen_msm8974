@@ -3050,4 +3050,10 @@ config HAS_MACH_MEMUTILS
 	bool "Motorola MSM memcpy enhancements"
 	help
 	Faster memcpy performance for Krait
+
+config MSM_SECBOOT
+	default n
+	bool "MSM Secboot verification driver"
+	help
+	Driver to expose secureboot status
 endif
