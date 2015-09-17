@@ -3288,7 +3288,9 @@ static void wcd9xxx_swch_irq_handler(struct wcd9xxx_mbhc *mbhc)
 			wcd9xxx_report_plug(mbhc, 0, SND_JACK_HEADPHONE);
 			is_removed = true;
 		} else if (mbhc->current_plug == PLUG_TYPE_GND_MIC_SWAP) {
+#ifndef CONFIG_MACH_SHENQI_K9
 			wcd9xxx_report_plug(mbhc, 0, SND_JACK_UNSUPPORTED);
+#endif
 			is_removed = true;
 		} else if (mbhc->current_plug == PLUG_TYPE_HEADSET) {
 			wcd9xxx_pause_hs_polling(mbhc);
