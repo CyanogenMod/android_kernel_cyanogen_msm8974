@@ -315,6 +315,12 @@ struct mdss_dsi_ctrl_pdata {
 	struct dsi_buf rx_buf;
 	struct dsi_buf status_buf;
 	int status_mode;
+
+#ifdef CONFIG_MACH_SHENQI_K9
+	int disp_vsp_gpio;
+	int disp_vsn_gpio;
+	int bl_outdoor_gpio;
+#endif
 };
 
 struct dsi_status_data {

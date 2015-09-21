@@ -32,7 +32,6 @@
 	qcom,platform-vsp-gpio = <&msmgpio 16 0>;
 	qcom,platform-enable-gpio = <&pm8941_gpios 13 0>;
 	qcom,platform-outdoor-gpio = <&msmgpio 64 0>;
-	/delete-property/ qcom,platform-reset-gpio;
 
 	qcom,platform-supply-entry1 {
 		qcom,supply-post-on-sleep = <0>;

@@ -673,6 +673,16 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
+#ifdef CONFIG_MACH_SHENQI_K9
+	if (gpio_is_valid(ctrl_pdata->disp_vsp_gpio) && gpio_is_valid(ctrl_pdata->disp_vsn_gpio)) {
+		gpio_direction_output(ctrl_pdata->disp_vsp_gpio, 1);
+		udelay(100);
+		wmb();
+		gpio_direction_output(ctrl_pdata->disp_vsn_gpio, 1);
+		//msleep(4);
+		wmb();
+	}
+#endif
 
 	pr_debug("%s+: ctrl=%p ndx=%d\n",
 				__func__, ctrl_pdata, ctrl_pdata->ndx);
@@ -1522,6 +1532,95 @@ int dsi_panel_device_register(struct device_node *pan_node,
 	ctrl_pdata->disp_en_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
 		"qcom,platform-enable-gpio", 0);
 
+#ifdef CONFIG_MACH_SHENQI_K9
+	if (!gpio_is_valid(ctrl_pdata->disp_en_gpio)) {
+		pr_err("%s:%d, Disp_en gpio not specified\n",
+						__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->disp_en_gpio, "disp_enable");
+		if (rc) {
+			pr_err("request reset gpio failed, rc=%d\n",
+			       rc);
+			gpio_free(ctrl_pdata->disp_en_gpio);
+			return -ENODEV;
+		}
+		rc = gpio_direction_output(ctrl_pdata->disp_en_gpio, 1);
+		if (rc) {
+			pr_err("set_direction for disp_en gpio failed, rc=%d\n",
+			       rc);
+			gpio_free(ctrl_pdata->disp_en_gpio);
+			return -ENODEV;
+		}
+	}
+
+
+	ctrl_pdata->rst_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
+			 "qcom,platform-reset-gpio", 0);
+
+	if (!gpio_is_valid(ctrl_pdata->rst_gpio)) {
+		pr_err("%s:%d, reset gpio not specified\n",
+						__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->rst_gpio, "disp_rst_n");
+		if (rc) {
+			pr_err("request reset gpio failed, rc=%d\n",
+				rc);
+			gpio_free(ctrl_pdata->rst_gpio);
+			if (gpio_is_valid(ctrl_pdata->disp_en_gpio))
+				gpio_free(ctrl_pdata->disp_en_gpio);
+			return -ENODEV;
+		}
+		gpio_direction_output(ctrl_pdata->rst_gpio, 1);
+                if (rc) {
+                        pr_err("set_direction for rst gpio failed, rc=%d\n",
+                               rc);
+                        gpio_free(ctrl_pdata->disp_en_gpio);
+                        return -ENODEV;
+                }
+	}
+
+	ctrl_pdata->disp_vsn_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
+			"qcom,platform-vsn-gpio", 0);
+	if (!gpio_is_valid(ctrl_pdata->disp_vsn_gpio)) {
+		pr_err("%s:%d, vsn gpio not specified\n",
+				__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->disp_vsn_gpio, "disp_vsn");
+		if (rc) {
+			pr_err("request vsn gpio failed, rc=%d\n",
+					rc);
+			return -ENODEV;
+		}
+	}
+
+	ctrl_pdata->disp_vsp_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
+			"qcom,platform-vsp-gpio", 0);
+	if (!gpio_is_valid(ctrl_pdata->disp_vsp_gpio)) {
+		pr_err("%s:%d, vsp gpio not specified\n",
+				__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->disp_vsp_gpio, "disp_vsp");
+		if (rc) {
+			pr_err("request vsp gpio failed, rc=%d\n",
+					rc);
+			return -ENODEV;
+		}
+	}
+
+	ctrl_pdata->bl_outdoor_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
+			"qcom,platform-outdoor-gpio", 0);
+	if (!gpio_is_valid(ctrl_pdata->bl_outdoor_gpio)) {
+		pr_err("%s:%d, bl_outdoor_gpio gpio not specified\n",
+				__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->bl_outdoor_gpio, "bl_outdoor");
+		if (rc) {
+			pr_err("request bl outdoor gpio failed, rc=%d\n",
+					rc);
+			return -ENODEV;
+		}
+	}
+#else
 	if (!gpio_is_valid(ctrl_pdata->disp_en_gpio))
 		pr_err("%s:%d, Disp_en gpio not specified\n",
 						__func__, __LINE__);
@@ -1573,6 +1672,7 @@ int dsi_panel_device_register(struct device_node *pan_node,
 	if (!gpio_is_valid(ctrl_pdata->rst_gpio))
 		pr_err("%s:%d, reset gpio not specified\n",
 						__func__, __LINE__);
+#endif
 
 	if (pinfo->mode_gpio_state != MODE_GPIO_NOT_VALID) {
 
