@@ -961,6 +961,7 @@ static void bq27530_enable_charging(struct bq27x00_device_info *di, bool enable)
 
   	int val = !enable;
 	int batt_present = 1;
+	int last_charging_state;
 #if 1
 	unsigned char data;
 #endif
@@ -984,10 +985,17 @@ static void bq27530_enable_charging(struct bq27x00_device_info *di, bool enable)
 		return;
 	}
 
+	last_charging_state = di->board->chg_en_flag;
+	/* optimistically set the state, change it back later if one of the corner
+	 * cases is triggered. Userspace expects this to be fast and the i2c methods
+	 * below take time which might cause charger mode to abort. */
+        di->board->chg_en_flag = enable;
+
 #ifdef SUPPORT_QPNP_VBUS_OVP
 	di->vbus_ovp = qpnp_check_vbus_ovp(&vusb_uv);
 	printk("%s: vbus is %d\n", __func__, vusb_uv);
 	if(di->vbus_ovp && enable) {
+		di->board->chg_en_flag = last_charging_state;
 		printk("vbus_vop:ignore enable charging.\n");
 		return;
 	}
@@ -997,6 +1005,7 @@ static void bq27530_enable_charging(struct bq27x00_device_info *di, bool enable)
 	batt_present = (ret & BQ27500_FLAG_BAT_DET)>0 ? 1:0;
 	
 	if(!batt_present){//battery is not present
+		di->board->chg_en_flag = last_charging_state;
 		printk("%s:battery is not present.\n",__func__);
 		enable_flag = false;
 		val = !enable_flag;
@@ -1041,6 +1050,7 @@ static void bq27530_enable_charging(struct bq27x00_device_info *di, bool enable)
 	}
 #endif
     }else{
+      di->board->chg_en_flag = last_charging_state;
       ret = bq27x00_read_i2c(di, BQ24192_REG_CTL_0, 1);
 			printk("wyh chg disable_force,hiz_reg=%d .\n",ret);
 		}
