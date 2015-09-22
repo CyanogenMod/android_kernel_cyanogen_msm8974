@@ -727,8 +727,11 @@ qpnp_chg_is_batt_present(struct qpnp_chg_chip *chip)
 				INT_RT_STS(chip->bat_if_base), rc);
 		return rc;
 	}
-
+#ifdef CONFIG_BATTERY_BQ27530
+	return 1;
+#else
 	return (batt_pres_rt_sts & BATT_PRES_IRQ) ? 1 : 0;
+#endif
 }
 
 static int
@@ -4155,6 +4158,23 @@ qpnp_chg_power_stage_set(struct qpnp_chg_chip *chip, bool reduce)
 	return rc;
 }
 
+#ifdef CONFIG_BATTERY_BQ27530
+long qpnp_batt_id = 0;
+static int
+qpnp_get_batt_id(struct qpnp_chg_chip *chip)
+{
+	int rc = 0;
+	struct qpnp_vadc_result results;
+
+	rc = qpnp_vadc_read(chip->vadc_dev, LR_MUX2_BAT_ID, &results);
+	if (rc) {
+		pr_err("Unable to read batt id rc=%d\n", rc);
+		return 0;
+	}
+	return results.physical;
+}
+#endif
+
 static int
 qpnp_chg_get_vusbin_uv(struct qpnp_chg_chip *chip)
 {
@@ -4206,13 +4226,13 @@ int get_vbat_averaged(struct qpnp_chg_chip *chip, int sample_count)
 #ifdef SUPPORT_QPNP_VBUS_OVP
 #define VBUS_MAX_THRESHOLD		6500000
 #define VBUS_SAMPLE_COUNT		16
-int qpnp_check_vbus_ovp(void)
+int qpnp_check_vbus_ovp(int *vusb_uv)
 {
-	int vusb_uv = get_vusb_averaged(qpnp_chip, VBUS_SAMPLE_COUNT);
+	*vusb_uv = get_vusb_averaged(qpnp_chip, VBUS_SAMPLE_COUNT);
 
-	//printk("%s: vbus is %d\n", __func__, vusb_uv);
-	if (vusb_uv >= VBUS_MAX_THRESHOLD) {
-		pr_err("%s, vbus is too high, %d >= %d\n", __func__, vusb_uv, VBUS_MAX_THRESHOLD);
+	//printk("%s: vbus is %d\n", __func__, *vusb_uv);
+	if (*vusb_uv >= VBUS_MAX_THRESHOLD) {
+		pr_err("%s, vbus is too high, %d >= %d\n", __func__, *vusb_uv, VBUS_MAX_THRESHOLD);
 		return 1;
 	} else
 		return 0;
@@ -5647,6 +5667,9 @@ qpnp_charger_probe(struct spmi_device *spmi)
 
 	schedule_delayed_work(&chip->aicl_check_work,
 		msecs_to_jiffies(EOC_CHECK_PERIOD_MS));
+#ifdef CONFIG_BATTERY_BQ27530
+	qpnp_batt_id = qpnp_get_batt_id(chip);
+#endif
 	pr_info("success chg_dis = %d, bpd = %d, usb = %d, dc = %d b_health = %d batt_present = %d\n",
 			chip->charging_disabled,
 			chip->bpd_detection,
