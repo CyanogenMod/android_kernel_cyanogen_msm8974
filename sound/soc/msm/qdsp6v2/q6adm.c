@@ -1208,6 +1208,12 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			    (open.topology_id == SRS_TRUMEDIA_TOPOLOGY_ID))
 				open.topology_id = DEFAULT_COPP_TOPOLOGY;
 		}
+#ifdef CONFIG_MACH_SHENQI_K9
+		if (perf_mode == LOW_LATENCY_PCM_MODE &&
+				open.topology_id == DIRAC_HD_AUDIO_TOPOLOGY_ID) {
+			open.topology_id = DEFAULT_COPP_TOPOLOGY;
+		}
+#endif
 		open.dev_num_channel = channel_mode & 0x00FF;
 		open.bit_width = bits_per_sample;
 		WARN_ON(perf_mode == ULTRA_LOW_LATENCY_PCM_MODE &&

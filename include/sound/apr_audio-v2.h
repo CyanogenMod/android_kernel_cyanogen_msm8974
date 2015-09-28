@@ -6593,6 +6593,8 @@ struct afe_spkr_prot_calib_get_resp {
 } __packed;
 
 
+/* Dirac HD Audio */
+#define DIRAC_HD_AUDIO_TOPOLOGY_ID		0x10012D00
 /* SRS TRUMEDIA start */
 /* topology */
 #define SRS_TRUMEDIA_TOPOLOGY_ID			0x00010D90
