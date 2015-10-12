@@ -284,7 +284,9 @@
 
 	gpio@df00 { /* GPIO 32 */
 		qcom,mode = <0>;        /* QPNP_PIN_MODE_DIG_IN */
-		qcom,pull = <4>;	/* QPNP_PIN_PULL_DN */
+		qcom,pull = <5>;	/* QPNP_PIN_PULL_DN */
+		qcom,vin-sel = <2>;	/* QPNP_PIN_VIN2 */
+		qcom,src-sel = <2>;	/* QPNP_PIN_SEL_FUNC_1 */
 		qcom,master-en = <1>;
 	};
 
@@ -358,16 +360,20 @@
   };
 
   mpp@a400 { /* MPP 5 */
+    qcom,mode = <4>; /* AIN input */
+    qcom,invert = <1>; /* Enable MPP */
+    qcom,ain-route = <0>; /* AMUX 5 */
+    qcom,master-en = <1>; /* ENABLE MPP */
+    qcom,src-sel = <0>; /* CONSTANT */
   };
 
   mpp@a500 { /* MPP 6 */
     /* SPI_ETH_RST config */
-    qcom,mode = <1>; /* DIG_OUT */
-    qcom,output-type = <0>; /* CMOS */
-    qcom,vin-sel = <2>; /* PM8941_S3 1.8V > 1.6V */
-    qcom,src-sel = <0>; /* CONSTANT */
-    qcom,out-strength = <1>;  /* QPNP_PIN_OUT_STRENGTH_LOW */
+    qcom,mode = <4>; /* AIN input */
+    qcom,invert = <1>; /* Enable MPP */
+    qcom,ain-route = <1>; /* AMUX 6 */
     qcom,master-en = <1>; /* ENABLE MPP */
+    qcom,src-sel = <0>; /* CONSTANT */
   };
 
   mpp@a600 { /* MPP 7 */
@@ -381,6 +387,30 @@
     qcom,out-strength = <1>;  /* QPNP_PIN_OUT_STRENGTH_LOW */
     qcom,master-en = <1>;
   };
+};
+
+&pm8941_vadc {
+	chan@14 {
+		label = "ver_adc0";
+		reg = <0x14>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@15 {
+		label = "ver_adc1";
+		reg = <0x15>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
 };
 
 &soc {

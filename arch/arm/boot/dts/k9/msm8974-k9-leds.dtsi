@@ -87,6 +87,51 @@
 		};
 	};
 
+	/delete-node/ qcom,leds@d900;
+	qcom,leds@d900 {
+		status = "disabled";
+	};
+
+	/delete-node/ qcom,leds@da00;
+	qcom,leds@da00 {
+		status = "disabled";
+	};
+
+	/delete-node/ qcom,leds@db00;
+	qcom,leds@db00 {
+		status = "disabled";
+	};
+
+	/delete-node/ qcom,leds@dc00;
+	qcom,leds@dc00 {
+		status = "disabled";
+	};
+
+	/delete-node/ qcom,leds@dd00;
+	qcom,leds@dd00 {
+		status = "disabled";
+	};
+
+	/delete-node/ qcom,leds@de00;
+	qcom,leds@de00 {
+		status = "disabled";
+	};
+
+	/delete-node/ qcom,leds@df00;
+	qcom,leds@df00 {
+		status = "disabled";
+	};
+
+	/delete-node/ qcom,leds@e000;
+	qcom,leds@e000 {
+		status = "disabled";
+	};
+
+	/delete-node/ qcom,leds@e100;
+	qcom,leds@e100 {
+		status = "disabled";
+	};
+
 	qcom,vib@c000{
 		status = "okay";
 		compatible = "qcom,qpnp-vibrator";

@@ -135,11 +135,6 @@ struct request_gpio {
 
 static struct request_gpio quat_mi2s_gpio[] = {
     {
-        .gpio_no = GPIO_QUAT_MI2S_MCLK,
-        .gpio_name = "QUAT_MI2S_MCLK",
-    },
-
-    {
         .gpio_no = GPIO_QUAT_MI2S_SCK,
         .gpio_name = "QUAT_MI2S_SCK",
     },
@@ -1759,7 +1754,11 @@ void *def_taiko_mbhc_cal(void)
 #undef S
 #define S(X, Y) ((WCD9XXX_MBHC_CAL_PLUG_TYPE_PTR(taiko_cal)->X) = (Y))
 	S(v_no_mic, 30);
+#ifdef CONFIG_MACH_SHENQI_K9
+	S(v_hs_max, 2500);
+#else
 	S(v_hs_max, 2400);
+#endif
 #undef S
 #define S(X, Y) ((WCD9XXX_MBHC_CAL_BTN_DET_PTR(taiko_cal)->X) = (Y))
 	S(c[0], 62);

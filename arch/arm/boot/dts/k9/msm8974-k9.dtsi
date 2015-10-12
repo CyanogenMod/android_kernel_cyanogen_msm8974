@@ -70,6 +70,7 @@
 
 	spi_4: spi@f9927000 { /* BLSP1 QUP5 */
 		compatible = "qcom,spi-qup-v2";
+		qcom,shared;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg-names = "spi_physical", "spi_bam_physical";

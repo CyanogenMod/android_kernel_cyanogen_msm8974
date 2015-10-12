@@ -14,6 +14,9 @@
 /include/ "../msm8974-regulator.dtsi"
 
 /* RPM controlled regulators: */
+&spi_eth_vreg {
+	/delete-property/ gpio;
+};
 
 &rpm_bus {
 	rpm-regulator-smpa1 {
