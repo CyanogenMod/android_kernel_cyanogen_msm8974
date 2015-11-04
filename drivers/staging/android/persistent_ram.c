@@ -405,10 +405,8 @@ struct persistent_ram_zone *__persistent_ram_init(struct device *dev, bool ecc)
 	struct persistent_ram_zone *prz;
 	int ret = -ENOMEM;
 
-	printk(KERN_ERR "REI5\n");
 	prz = kzalloc(sizeof(struct persistent_ram_zone), GFP_KERNEL);
 	if (!prz) {
-		printk(KERN_ERR "REI6\n");
 		pr_err("persistent_ram: failed to allocate persistent ram zone\n");
 		goto err;
 	}
@@ -417,49 +415,38 @@ struct persistent_ram_zone *__persistent_ram_init(struct device *dev, bool ecc)
 
 	ret = persistent_ram_buffer_init(dev_name(dev), prz, &ram);
 	if (ret) {
-		printk(KERN_ERR "REI7\n");
 		pr_err("persistent_ram: failed to initialize buffer\n");
 		goto err;
 	}
 
 	prz->ecc = ecc;
 	ret = persistent_ram_init_ecc(prz, prz->buffer_size, ram);
-	if (ret) {
-		printk(KERN_ERR "REI8\n");
-		pr_err("persistent_ram: failed to init ecc size %zu\n", prz->buffer_size);
+	if (ret)
 		goto err;
-	}
 
 	if (prz->buffer->sig == PERSISTENT_RAM_SIG) {
 		if (buffer_size(prz) > prz->buffer_size ||
-		    buffer_start(prz) > buffer_size(prz)) {
-			printk(KERN_ERR "REI9\n");
+		    buffer_start(prz) > buffer_size(prz))
 			pr_info("persistent_ram: found existing invalid buffer,"
 				" size %zu, start %zu\n",
 			       buffer_size(prz), buffer_start(prz));
-		}
 		else {
-			printk(KERN_ERR "REI10\n");
 			pr_info("persistent_ram: found existing buffer,"
 				" size %zu, start %zu\n",
 			       buffer_size(prz), buffer_start(prz));
 			persistent_ram_save_old(prz);
 		}
 	} else {
-		printk(KERN_ERR "REI11\n");
 		pr_info("persistent_ram: no valid data in buffer"
 			" (sig = 0x%08x)\n", prz->buffer->sig);
 	}
 
-	printk(KERN_ERR "REI12\n");
 	prz->buffer->sig = PERSISTENT_RAM_SIG;
 	atomic_set(&prz->buffer->start, 0);
 	atomic_set(&prz->buffer->size, 0);
 
-	printk(KERN_ERR "REI13\n");
 	return prz;
 err:
-	printk(KERN_ERR "REI14\n");
 	kfree(prz);
 	return ERR_PTR(ret);
 }
@@ -467,7 +454,6 @@ err:
 struct persistent_ram_zone * __devinit
 persistent_ram_init_ringbuffer(struct device *dev, bool ecc)
 {
-	printk(KERN_ERR "REI15\n");
 	return __persistent_ram_init(dev, ecc);
 }
 
