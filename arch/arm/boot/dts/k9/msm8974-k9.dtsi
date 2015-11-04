@@ -131,10 +131,15 @@
 		qcom,i2c-src-freq = <19200000>;
 		qcom,master-id = <84>;
 	};
+
+	ram_console {
+		compatible = "ram_console";
+		bootinfo = <0>;
+	};
 };
 
 &memory_hole {
-	qcom,memblock-remove = <0x4600000 0x8c00000
+	qcom,memblock-remove = <0x4600000 0x8d00000
 		0x0fa00000 0x500000>; /* Address and size of the hole */
 };
 

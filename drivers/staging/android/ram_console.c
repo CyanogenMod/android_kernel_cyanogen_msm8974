@@ -56,8 +56,10 @@ static int __devinit ram_console_probe(struct platform_device *pdev)
 	struct persistent_ram_zone *prz;
 
 	prz = persistent_ram_init_ringbuffer(&pdev->dev, true);
-	if (IS_ERR(prz))
+	if (IS_ERR(prz)) {
+		printk(KERN_ERR "REI1");
 		return PTR_ERR(prz);
+	}
 
 
 	if (pdata) {
@@ -66,6 +68,7 @@ static int __devinit ram_console_probe(struct platform_device *pdev)
 			bootinfo_size = strlen(bootinfo);
 	}
 
+	printk(KERN_ERR "REI51");
 	ram_console_zone = prz;
 	ram_console.data = prz;
 
@@ -155,14 +158,19 @@ static int __init ram_console_late_init(void)
 	struct proc_dir_entry *entry;
 	struct persistent_ram_zone *prz = ram_console_zone;
 
-	if (!prz)
+	if (!prz) {
+		printk(KERN_ERR "REI2");
 		return 0;
+	}
 
-	if (persistent_ram_old_size(prz) == 0)
+	if (persistent_ram_old_size(prz) == 0) {
+		printk(KERN_ERR "REI3");
 		return 0;
+	}
 
 	entry = create_proc_entry("last_kmsg", S_IFREG | S_IRUGO, NULL);
 	if (!entry) {
+		printk(KERN_ERR "REI4");
 		printk(KERN_ERR "ram_console: failed to create proc entry\n");
 		persistent_ram_free_old(prz);
 		return 0;
