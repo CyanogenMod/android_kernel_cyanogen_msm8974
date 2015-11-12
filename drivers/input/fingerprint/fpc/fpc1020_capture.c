@@ -450,7 +450,6 @@ int fpc1020_capture_wait_finger_down(fpc1020_data_t *fpc1020)
     int raw_zones;
 	int error;
 	bool finger_down = false;
-
 	error = fpc1020_wait_finger_present(fpc1020);
 
 	while (!finger_down && (error >= 0)) {
@@ -483,7 +482,6 @@ int fpc1020_capture_wait_finger_up(fpc1020_data_t *fpc1020)
     int raw_zones;
 	int error = 0;
 	bool finger_up = false;
-
 	while (!finger_up && (error >= 0)) {
 
 		if (fpc1020->worker.stop_request)
@@ -644,11 +642,11 @@ int fpc1020_capture_buffer(fpc1020_data_t *fpc1020,
 {
 	int error = 0;
 
-	//dev_dbg(&fpc1020->spi->dev, "%s\n", __func__);
 
 	error = fpc1020_cmd(fpc1020,
 			FPC1020_CMD_CAPTURE_IMAGE,
 			FPC_1020_IRQ_REG_BIT_FIFO_NEW_DATA);
+
 
 	if (error < 0)
 		goto out_error;

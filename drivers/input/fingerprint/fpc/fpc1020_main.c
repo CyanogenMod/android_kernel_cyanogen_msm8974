@@ -10,6 +10,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/cdev.h>
 
 #include <linux/spi/spi.h>
 #include <linux/fs.h>
@@ -22,6 +23,7 @@
 #include <linux/clk.h>
 #include <linux/fb.h>
 #include <linux/input.h>
+#include <linux/poll.h>
 
 #include "fpc1020_common.h"
 
@@ -29,11 +31,15 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Fingerprint Cards AB <tech@fingerprints.com>");
 MODULE_DESCRIPTION("FPC1020 touch sensor driver.");
 
-//#define FPC1020_DBG
+DECLARE_WAIT_QUEUE_HEAD(fnger_detect_wq);
+static int fpc1020_device_count;
+#define FPC1020_DBG
 
 static int fb_notifier_callback(struct notifier_block *self, unsigned long event, void *data);
 static ssize_t fpc1020_store_attr_setup(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
 static ssize_t fpc1020_show_attr_setup(struct device *dev, struct device_attribute *attr, char *buf);
+
+static int __devinit fpc1020_create_device(fpc1020_data_t *fpc1020);
 
 #define FNGR_DETECT     KEY_FNGR_DETECT
 #define FPC1020_RESET_RETRIES			2
@@ -59,9 +65,11 @@ struct fpc1020_attribute fpc1020_attr_##_field =			\
 					FPC1020_ATTR(_grp, _field, (_mode))
 
 static FPC1020_DEV_ATTR(setup, enable_navi, DEVFS_SETUP_MODE);
+static FPC1020_DEV_ATTR(setup, irq, DEVFS_SETUP_MODE);
 
 static struct attribute *fpc1020_setup_attrs[] = {
     &fpc1020_attr_enable_navi.attr.attr,
+    &fpc1020_attr_irq.attr.attr,
 	NULL
 };
 
@@ -70,43 +78,9 @@ static const struct attribute_group fpc1020_setup_attr_group = {
 	.name = "setup"
 };
 
-int spi_clk_access_cnt = 0;
+volatile int spi_clk_access_cnt = 0;
+int irq_status = 0; //IRQ disabled after bootup
 
-
-
-static int fpc1020_gpio_reset(fpc1020_data_t *fpc1020)
-{
-	int error = 0;
-	int counter = FPC1020_RESET_RETRIES;
-
-    //dev_info(&fpc1020->spi->dev, "Do HW reset....reset_pin(%d), irq_pin(%d)\n",
-    //        fpc1020->reset_gpio, fpc1020->irq_gpio);
-	while (counter) {
-		counter--;
-		gpio_set_value(fpc1020->reset_gpio, 1);
-		udelay(FPC1020_RESET_HIGH1_US);
-
-		gpio_set_value(fpc1020->reset_gpio, 0);
-		udelay(FPC1020_RESET_LOW_US);
-
-		gpio_set_value(fpc1020->reset_gpio, 1);
-		udelay(FPC1020_RESET_HIGH2_US);
-
-		error = gpio_get_value(fpc1020->irq_gpio) ? 0 : -EIO;
-
-		if (!error) {
-			//printk(KERN_INFO "%s OK !\n", __func__);
-			counter = 0;
-		} else {
-			printk(KERN_INFO "%s timed out,retrying ...\n",
-				__func__);
-
-			udelay(1250);
-		}
-	}
-    //dev_info(&fpc1020->spi->dev, "HW reset done.\n");
-	return error;
-}
 
 int fpc1020_hw_reset(fpc1020_data_t *fpc1020)
 {
@@ -125,6 +99,8 @@ static ssize_t fpc1020_show_attr_setup(struct device *dev,
 	fpc_attr = container_of(attr, struct fpc1020_attribute, attr);
     if (fpc_attr->offset == offsetof(fpc1020_setup_t, enable_navi))
         val = spi_clk_access_cnt;
+    if (fpc_attr->offset == offsetof(fpc1020_setup_t, irq))
+        val = irq_status;
     if (val >= 0)
         return scnprintf(buf, PAGE_SIZE, "%i\n", val);
 	return -ENOENT;
@@ -145,8 +121,8 @@ static ssize_t fpc1020_store_attr_setup(struct device *dev, struct device_attrib
                     spi_clk_access_cnt = 1;
                     clk_prepare_enable(fpc1020->core_clk);
                     clk_prepare_enable(fpc1020->iface_clk);
-                    disable_irq_nosync(fpc1020->irq);
-                    fpc1020_gpio_reset(fpc1020);
+                    //disable_irq_nosync(fpc1020->irq);
+                    //fpc1020_gpio_reset(fpc1020);
                 }
             } else if (val == 1) {
                 //dev_info(&fpc1020->spi->dev, "Back to REE\n");
@@ -154,8 +130,18 @@ static ssize_t fpc1020_store_attr_setup(struct device *dev, struct device_attrib
                     spi_clk_access_cnt = 0;
                     clk_disable_unprepare(fpc1020->core_clk);
                     clk_disable_unprepare(fpc1020->iface_clk);
-                    enable_irq(fpc1020->irq);
+                    //enable_irq(fpc1020->irq);
                 }
+            }
+        } else if (fpc_attr->offset == offsetof(fpc1020_setup_t, irq)) {
+            if (val == 0 && irq_status == 1) {
+                dev_info(&fpc1020->spi->dev, "IRQ disable\n");
+                disable_irq_nosync(fpc1020->irq);
+                irq_status = 0;
+            } else if (val == 1 && irq_status == 0) {
+                dev_info(&fpc1020->spi->dev, "IRQ enable\n");
+                enable_irq(fpc1020->irq);
+                irq_status = 1;
             }
         } else
             return -ENOENT;
@@ -177,17 +163,75 @@ irqreturn_t fpc1020_interrupt(int irq, void *_fpc1020)
 {
     fpc1020_data_t *fpc1020 = _fpc1020;
 
-    //dev_info(&fpc1020->spi->dev, "%s\n", __func__);
     if (gpio_get_value(fpc1020->irq_gpio)) {
-        //dev_info(&fpc1020->spi->dev, "%s : Valided interrupt\n", __func__);
+        dev_info(&fpc1020->spi->dev, "%s : Valided interrupt\n", __func__);
         fpc1020->report_key = FNGR_DETECT;
-        queue_work(fpc1020->fpc1020_wq, &fpc1020->input_report_work);
+        wake_up_interruptible(&fnger_detect_wq);
+        //queue_work(fpc1020->fpc1020_wq, &fpc1020->input_report_work);
         return IRQ_HANDLED;
     } else {
         return IRQ_NONE;
     }
 }
 
+#define FPC1020_CLASS_NAME "fpc1020"
+static int __devinit fpc1020_create_class(fpc1020_data_t *fpc1020)
+{
+	int error = 0;
+
+	dev_dbg(&fpc1020->spi->dev, "%s\n", __func__);
+
+	fpc1020->class = class_create(THIS_MODULE, FPC1020_CLASS_NAME);
+
+	if (IS_ERR(fpc1020->class)) {
+		dev_err(&fpc1020->spi->dev, "failed to create class.\n");
+		error = PTR_ERR(fpc1020->class);
+	}
+
+	return error;
+}
+
+static int __devinit fpc1020_create_device(fpc1020_data_t *fpc1020)
+{
+	int error = 0;
+
+	dev_dbg(&fpc1020->spi->dev, "%s\n", __func__);
+
+	if (FPC1020_MAJOR > 0) {
+		fpc1020->devno = MKDEV(FPC1020_MAJOR, fpc1020_device_count++);
+
+		error = register_chrdev_region(fpc1020->devno,
+						1,
+						FPC1020_DEV_NAME);
+	} else {
+		error = alloc_chrdev_region(&fpc1020->devno,
+					fpc1020_device_count++,
+					1,
+					FPC1020_DEV_NAME);
+	}
+
+	if (error < 0) {
+		dev_err(&fpc1020->spi->dev,
+				"%s: FAILED %d.\n", __func__, error);
+		goto out;
+
+	} else {
+		dev_info(&fpc1020->spi->dev, "%s: major=%d, minor=%d\n",
+						__func__,
+						MAJOR(fpc1020->devno),
+						MINOR(fpc1020->devno));
+	}
+
+	fpc1020->device = device_create(fpc1020->class, NULL, fpc1020->devno,
+						NULL, "%s", FPC1020_DEV_NAME);
+
+	if (IS_ERR(fpc1020->device)) {
+		dev_err(&fpc1020->spi->dev, "device_create failed.\n");
+		error = PTR_ERR(fpc1020->device);
+	}
+out:
+	return error;
+}
 static int fpc1020_manage_sysfs(fpc1020_data_t *fpc1020,
         struct spi_device *spi, bool create)
 {
@@ -302,6 +346,8 @@ static int __devinit fpc1020_irq_init(fpc1020_data_t *fpc1020,
 
 		return error;
 	}
+
+    disable_irq(fpc1020->irq);
 	return error;
 }
 
@@ -446,6 +492,7 @@ void fpc1020_report_work_func(struct work_struct *work)
     fpc1020 = container_of(work, fpc1020_data_t, input_report_work);
     if (fpc1020->report_key_flag == true) {
         dev_warn(&fpc1020->spi->dev, "FNGR_DETECT\n");
+        //wake_up_interruptible(&fnger_detect_wq);
         input_report_key(fpc1020->input_dev, fpc1020->report_key, 1);
         input_sync(fpc1020->input_dev);
         input_report_key(fpc1020->input_dev, fpc1020->report_key, 0);
@@ -500,6 +547,61 @@ static int __devinit fpc1020_spi_setup(fpc1020_data_t *fpc1020,
 out_err:
 	return error;
 }
+
+static int fpc1020_open(struct inode *inode, struct file *file)
+{
+    fpc1020_data_t *fpc1020;
+    fpc1020 = container_of(inode->i_cdev, fpc1020_data_t, cdev);
+    dev_info(&fpc1020->spi->dev, "%s\n", __func__);
+    file->private_data = fpc1020;
+    return 0;
+}
+
+static ssize_t fpc1020_write(struct file *file, const char *buff,
+					size_t count, loff_t *ppos)
+{
+	printk(KERN_INFO "%s\n", __func__);
+
+	return -ENOTTY;
+}
+
+static ssize_t fpc1020_read(struct file *file, char *buff,
+				size_t count, loff_t *ppos)
+{
+    printk(KERN_INFO "%s\n", __func__);
+    return -ENOENT;
+}
+
+
+static int fpc1020_release(struct inode *inode, struct file *file)
+{
+
+    printk("%s\n", __func__);
+    return -ENOENT;
+}
+
+static unsigned int fpc1020_poll(struct file *file, poll_table *wait)
+{
+	unsigned int mask = 0;
+	fpc1020_data_t *fpc1020 = file->private_data;
+    poll_wait(file, &fnger_detect_wq, wait);
+    if (fpc1020->report_key == FNGR_DETECT) {
+        dev_warn(&fpc1020->spi->dev, "%s, FNGR_DETECT\n", __func__);
+        mask = POLLIN|POLLRDNORM;
+        fpc1020->report_key = 0;
+    }
+    return mask;
+}
+
+static const struct file_operations fpc1020_fops = {
+	.owner          = THIS_MODULE,
+	.open           = fpc1020_open,
+	.write          = fpc1020_write,
+	.read           = fpc1020_read,
+	.release        = fpc1020_release,
+	.poll           = fpc1020_poll,
+
+};
 
 static int __devinit fpc1020_probe(struct spi_device *spi)
 {
@@ -573,7 +675,36 @@ static int __devinit fpc1020_probe(struct spi_device *spi)
     if (error)
         goto err;
 
+    error = fpc1020_setup_defaults(fpc1020);
+    if (error)
+        goto err;
 
+    error = fpc1020_write_sensor_1150_setup(fpc1020);
+    if (error) {
+        dev_err(&fpc1020->spi->dev, "write sensor 1150 setup failed\n");
+        goto err;
+    } else {
+        dev_err(&fpc1020->spi->dev, "Write sensor success\n");
+    }
+    error = fpc1020_create_class(fpc1020);
+    if (error)
+        goto err;
+
+    error = fpc1020_create_device(fpc1020);
+    if (error)
+        goto err;
+
+    /*Init cdev*/
+    cdev_init(&fpc1020->cdev, &fpc1020_fops);
+    fpc1020->cdev.owner = THIS_MODULE;
+    error = cdev_add(&fpc1020->cdev, fpc1020->devno, 1);
+    if (error) {
+        dev_err(&fpc1020->spi->dev, "cdev_add failed.\n");
+        cdev_del(&fpc1020->cdev);
+        unregister_chrdev_region(fpc1020->devno, 1);
+        fpc1020_manage_sysfs(fpc1020, spi, false);
+        goto err;
+    }
     fpc1020->fb_notif.notifier_call = fb_notifier_callback;
     error = fb_register_client(&fpc1020->fb_notif);
     if (error) {
@@ -602,7 +733,7 @@ static int fpc1020_suspend(struct device *dev)
 {
     fpc1020_data_t *fpc1020 = dev_get_drvdata(dev);
     dev_info(&fpc1020->spi->dev, "%s\n", __func__);
-    disable_irq(fpc1020->irq);
+    //disable_irq_nosync(fpc1020->irq);
     return 0;
 }
 
@@ -611,8 +742,8 @@ static int fpc1020_resume(struct device *dev)
 	fpc1020_data_t *fpc1020 = dev_get_drvdata(dev);
 	dev_info(&fpc1020->spi->dev, "%s\n", __func__);
     spi_clk_access_cnt = 0;
-    fpc1020_gpio_reset(fpc1020);
-    enable_irq(fpc1020->irq);
+    //fpc1020_gpio_reset(fpc1020);
+    //enable_irq(fpc1020->irq);
     return 0;
 }
 

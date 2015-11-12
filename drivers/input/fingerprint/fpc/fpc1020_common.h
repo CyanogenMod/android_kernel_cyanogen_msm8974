@@ -247,6 +247,7 @@ typedef struct fpc1020_setup {
 	u8 input_mode;
 #endif
     u8 enable_navi;
+    u8 irq;
     u16 gain_shift;
     u16 pixel_ctrl;
     u8 force_reset;
@@ -345,7 +346,7 @@ extern int fpc1020_manage_huge_buffer(fpc1020_data_t *fpc1020,
 
 extern int fpc1020_setup_defaults(fpc1020_data_t *fpc1020);
 
-//extern int fpc1020_gpio_reset(fpc1020_data_t *fpc1020);
+extern int fpc1020_gpio_reset(fpc1020_data_t *fpc1020);
 
 extern int fpc1020_spi_reset(fpc1020_data_t *fpc1020);
 
@@ -356,6 +357,8 @@ extern int fpc1020_check_hw_id(fpc1020_data_t *fpc1020);
 extern const char *fpc1020_hw_id_text(fpc1020_data_t *fpc1020);
 
 extern int fpc1020_write_sensor_setup(fpc1020_data_t *fpc1020);
+
+extern int fpc1020_write_sensor_1150_setup(fpc1020_data_t *fpc1020);
 
 extern int fpc1020_wait_for_irq(fpc1020_data_t *fpc1020, int timeout);
 

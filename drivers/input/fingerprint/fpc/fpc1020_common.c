@@ -181,7 +181,7 @@ static int fpc1020_write_sensor_1020a_a3a4_setup(fpc1020_data_t *fpc1020);
 
 static int fpc1020_write_sensor_1021_setup(fpc1020_data_t *fpc1020);
 
-static int fpc1020_write_sensor_1150_setup(fpc1020_data_t *fpc1020);
+//static int fpc1020_write_sensor_1150_setup(fpc1020_data_t *fpc1020);
 
 static int fpc1020_check_irq_after_reset(fpc1020_data_t *fpc1020);
 
@@ -263,61 +263,15 @@ int fpc1020_manage_huge_buffer(fpc1020_data_t *fpc1020, size_t new_size)
 /* -------------------------------------------------------------------- */
 int fpc1020_setup_defaults(fpc1020_data_t *fpc1020)
 {
-	int error = 0;
 	const fpc1020_setup_t *ptr;
 
-	memcpy((void *)&fpc1020->diag,
-	       (void *)&fpc1020_diag_default,
-	       sizeof(fpc1020_diag_t));
-
-	switch (fpc1020->chip.type) {
-
-	case FPC1020_CHIP_1020A:
-
-		ptr = (fpc1020->chip.revision == 1) ? &fpc1020_setup_default_1020_a1a2 :
-			(fpc1020->chip.revision == 2) ? &fpc1020_setup_default_1020_a1a2 :
-			(fpc1020->chip.revision == 3) ? &fpc1020_setup_default_1020_a3a4 :
-			(fpc1020->chip.revision == 4) ? &fpc1020_setup_default_1020_a3a4 :
-			NULL;
-		break;
-
-	case FPC1020_CHIP_1021A: 
-		ptr = (fpc1020->chip.revision == 2) ? &fpc1020_setup_default_1021_a2b1 :
-			NULL;
-		break;
-
-	case FPC1020_CHIP_1021B:
-		ptr = (fpc1020->chip.revision == 1) ? &fpc1020_setup_default_1021_a2b1 :
-			NULL;
-		break;
-
-	case FPC1020_CHIP_1150A:
-	case FPC1020_CHIP_1150B:
-	case FPC1020_CHIP_1150F:
-		ptr = (fpc1020->chip.revision == 1) ? &fpc1020_setup_default_1150_a1b1f1 :
-			NULL;
-		break;
-
-	default:
-		ptr = NULL;
-		break;
-	}
-
-	error = (ptr == NULL) ? -EINVAL : 0;
-	if (error)
-		goto out_err;
+    ptr = &fpc1020_setup_default_1150_a1b1f1;
 
 	memcpy((void *)&fpc1020->setup,	ptr, sizeof(fpc1020_setup_t));
 
 	dev_dbg(&fpc1020->spi->dev, "%s OK\n", __func__);
 
 	return 0;
-
-out_err:
-	memset((void *)&fpc1020->setup,	0, sizeof(fpc1020_setup_t));
-	dev_err(&fpc1020->spi->dev, "%s FAILED %d\n", __func__, error);
-
-	return error;
 }
 
 
@@ -965,7 +919,7 @@ out:
 
 
 /* -------------------------------------------------------------------- */
-static int fpc1020_write_sensor_1150_setup(fpc1020_data_t *fpc1020)
+int fpc1020_write_sensor_1150_setup(fpc1020_data_t *fpc1020)
 {
 	int error = 0;
 	u8 temp_u8;
@@ -1033,8 +987,8 @@ static int fpc1020_write_sensor_1150_setup(fpc1020_data_t *fpc1020)
 	if (error)
 		goto out;
 
-	temp_u32 = 0x20ff;
-	//temp_u32 = 0x01;
+	//temp_u32 = 0x20ff;
+	temp_u32 = 0x19012001;
 	FPC1020_MK_REG_WRITE(reg, FPC1150_REG_FNGR_DET_CNTR, &temp_u32);
 	error = fpc1020_reg_access(fpc1020, &reg);
 	if (error)
@@ -1558,14 +1512,14 @@ int fpc1020_sleep(fpc1020_data_t *fpc1020, bool deep_sleep)
 				error == FPC1020_STATUS_REG_IN_SLEEP_MODE;
 		}
 		if (!sleep_ok) {
-            fpc1020_gpio_reset(fpc1020);
+            //fpc1020_gpio_reset(fpc1020);
             error = fpc1020_cmd(fpc1020,
 				(deep_sleep) ? FPC1020_CMD_ACTIVATE_DEEP_SLEEP_MODE :
 						FPC1020_CMD_ACTIVATE_SLEEP_MODE,
 				0);
 			udelay(FPC1020_SLEEP_RETRY_TIME_US);
 			retries--;
-            dev_warn(&fpc1020->spi->dev, "retries %d\n", retries);
+            dev_warn(&fpc1020->spi->dev, "-- %s --retries %d\n", __func__, retries);
 		}
 	}
 
