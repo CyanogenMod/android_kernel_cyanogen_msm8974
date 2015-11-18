@@ -233,6 +233,7 @@ struct qpnp_chg_irq {
 	int		irq;
 	unsigned long		disabled;
 	unsigned long		wake_enable;
+	bool			is_wake;
 };
 
 struct qpnp_chg_regulator {
@@ -628,6 +629,10 @@ qpnp_chg_enable_irq(struct qpnp_chg_irq *irq)
 		pr_debug("number = %d\n", irq->irq);
 		enable_irq(irq->irq);
 	}
+	if ((irq->is_wake) && (!__test_and_set_bit(0, &irq->wake_enable))) {
+		pr_debug("enable wake, number = %d\n", irq->irq);
+		enable_irq_wake(irq->irq);
+	}
 }
 
 static void
@@ -636,6 +641,10 @@ qpnp_chg_disable_irq(struct qpnp_chg_irq *irq)
 	if (!__test_and_set_bit(0, &irq->disabled)) {
 		pr_debug("number = %d\n", irq->irq);
 		disable_irq_nosync(irq->irq);
+	}
+	if ((irq->is_wake) && (__test_and_clear_bit(0, &irq->wake_enable))) {
+		pr_debug("disable wake, number = %d\n", irq->irq);
+		disable_irq_wake(irq->irq);
 	}
 }
 
@@ -646,6 +655,7 @@ qpnp_chg_irq_wake_enable(struct qpnp_chg_irq *irq)
 		pr_debug("number = %d\n", irq->irq);
 		enable_irq_wake(irq->irq);
 	}
+	irq->is_wake = true;
 }
 
 static void
@@ -655,6 +665,7 @@ qpnp_chg_irq_wake_disable(struct qpnp_chg_irq *irq)
 		pr_debug("number = %d\n", irq->irq);
 		disable_irq_wake(irq->irq);
 	}
+	irq->is_wake = false;
 }
 
 #define USB_OTG_EN_BIT	BIT(0)
@@ -2792,7 +2803,8 @@ qpnp_batt_external_power_changed(struct power_supply *psy)
 							OVP_USB_WALL_TRSH_MA);
 					} else if (unlikely(
 							ext_ovp_isns_present)) {
-						qpnp_chg_iusb_trim_set(chip, 0);
+						qpnp_chg_iusb_trim_set(chip,
+							chip->usb_trim_default);
 						qpnp_chg_iusbmax_set(chip,
 							IOVP_USB_WALL_TRSH_MA);
 					} else {
@@ -3456,14 +3468,15 @@ qpnp_chg_regulator_boost_enable(struct regulator_dev *rdev)
 			pr_err("failed to write SEC_ACCESS rc=%d\n", rc);
 			return rc;
 		}
-
-		rc = qpnp_chg_masked_write(chip,
-			chip->usb_chgpth_base + COMP_OVR1,
-			0xFF,
-			0x2F, 1);
-		if (rc) {
-			pr_err("failed to write COMP_OVR1 rc=%d\n", rc);
-			return rc;
+		if (chip->type != SMBBP) {
+			rc = qpnp_chg_masked_write(chip,
+				chip->usb_chgpth_base + COMP_OVR1,
+				0xFF,
+				0x2F, 1);
+			if (rc) {
+				pr_err("failed to write COMP_OVR1 rc=%d\n", rc);
+				return rc;
+			}
 		}
 	}
 
@@ -3562,16 +3575,16 @@ qpnp_chg_regulator_boost_disable(struct regulator_dev *rdev)
 			pr_err("failed to write SEC_ACCESS rc=%d\n", rc);
 			return rc;
 		}
-
-		rc = qpnp_chg_masked_write(chip,
-			chip->usb_chgpth_base + COMP_OVR1,
-			0xFF,
-			0x00, 1);
-		if (rc) {
-			pr_err("failed to write COMP_OVR1 rc=%d\n", rc);
-			return rc;
+		if (chip->type != SMBBP) {
+			rc = qpnp_chg_masked_write(chip,
+				chip->usb_chgpth_base + COMP_OVR1,
+				0xFF,
+				0x00, 1);
+			if (rc) {
+				pr_err("failed to write COMP_OVR1 rc=%d\n", rc);
+				return rc;
+			}
 		}
-
 		usleep(1000);
 
 		qpnp_chg_usb_suspend_enable(chip, 0);
@@ -4588,10 +4601,10 @@ qpnp_chg_request_irqs(struct qpnp_chg_chip *chip)
 
 			qpnp_chg_irq_wake_enable(&chip->chg_trklchg);
 			qpnp_chg_irq_wake_enable(&chip->chg_failed);
-			qpnp_chg_disable_irq(&chip->chg_vbatdet_lo);
 			qpnp_chg_irq_wake_enable(&chip->chg_vbatdet_lo);
-
+			qpnp_chg_disable_irq(&chip->chg_vbatdet_lo);
 			break;
+
 		case SMBB_BAT_IF_SUBTYPE:
 		case SMBBP_BAT_IF_SUBTYPE:
 		case SMBCL_BAT_IF_SUBTYPE:
