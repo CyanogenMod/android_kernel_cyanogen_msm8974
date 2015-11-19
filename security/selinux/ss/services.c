@@ -1109,6 +1109,7 @@ void security_compute_av(u32 ssid,
 			goto allow;
 		goto out;
 	}
+	context_struct_compute_av(scontext, tcontext, tclass, avd, ops);
 	map_decision(orig_tclass, avd, policydb.allow_unknown);
 out:
 	read_unlock(&policy_rwlock);

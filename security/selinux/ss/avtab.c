@@ -334,32 +334,6 @@ void avtab_hash_eval(struct avtab *h, char *tag)
 	       chain2_len_sum);
 }
 
-/*
- * extended permissions compatibility. Make ToT Android kernels compatible
- * with Android M releases
- */
-#define AVTAB_OPTYPE_ALLOWED	0x1000
-#define AVTAB_OPTYPE_AUDITALLOW	0x2000
-#define AVTAB_OPTYPE_DONTAUDIT	0x4000
-#define AVTAB_OPTYPE		(AVTAB_OPTYPE_ALLOWED | \
-				AVTAB_OPTYPE_AUDITALLOW | \
-				AVTAB_OPTYPE_DONTAUDIT)
-#define AVTAB_XPERMS_OPTYPE	4
-
-#define avtab_xperms_to_optype(x) (x << AVTAB_XPERMS_OPTYPE)
-#define avtab_optype_to_xperms(x) (x >> AVTAB_XPERMS_OPTYPE)
-
-static unsigned int avtab_android_m_compat;
-
-static void avtab_android_m_compat_set(void)
-{
-	if (!avtab_android_m_compat) {
-		pr_info("SELinux:  Android master kernel running Android"
-				" M policy in compatibility mode.\n");
-		avtab_android_m_compat = 1;
-	}
-}
-
 static uint16_t spec_order[] = {
 	AVTAB_ALLOWED,
 	AVTAB_AUDITDENY,
@@ -476,13 +450,6 @@ int avtab_read_item(struct avtab *a, void *fp, struct policydb *pol,
 	key.target_class = le16_to_cpu(buf16[items++]);
 	key.specified = le16_to_cpu(buf16[items++]);
 
-	if ((key.specified & AVTAB_OPTYPE) &&
-			(vers == POLICYDB_VERSION_XPERMS_IOCTL)) {
-		key.specified = avtab_optype_to_xperms(key.specified);
-		android_m_compat_optype = 1;
-		avtab_android_m_compat_set();
-	}
-
 	if (!policydb_type_isvalid(pol, key.source_type) ||
 	    !policydb_type_isvalid(pol, key.target_type) ||
 	    !policydb_class_isvalid(pol, key.target_class)) {
@@ -592,11 +559,7 @@ int avtab_write_item(struct policydb *p, struct avtab_node *cur, void *fp)
 	buf16[0] = cpu_to_le16(cur->key.source_type);
 	buf16[1] = cpu_to_le16(cur->key.target_type);
 	buf16[2] = cpu_to_le16(cur->key.target_class);
-	if (avtab_android_m_compat && (cur->key.specified & AVTAB_XPERMS) &&
-		    (cur->datum.u.xperms->specified == AVTAB_XPERMS_IOCTLDRIVER))
-		buf16[3] = cpu_to_le16(avtab_xperms_to_optype(cur->key.specified));
-	else
-		buf16[3] = cpu_to_le16(cur->key.specified);
+	buf16[3] = cpu_to_le16(cur->key.specified);
 	rc = put_entry(buf16, sizeof(u16), 4, fp);
 	if (rc)
 		return rc;

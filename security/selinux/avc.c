@@ -191,6 +191,7 @@ void __init avc_init(void)
 	atomic_set(&avc_cache.lru_hint, 0);
 
 	avc_node_cachep = kmem_cache_create("avc_node", sizeof(struct avc_node),
+					     0, SLAB_PANIC, NULL);
 	avc_operation_node_cachep = kmem_cache_create("avc_operation_node",
 				sizeof(struct avc_operation_node),
 				0, SLAB_PANIC, NULL);

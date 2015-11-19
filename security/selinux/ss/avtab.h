@@ -55,7 +55,7 @@ struct avtab_key {
 	u16 specified;	/* what field is specified */
 };
 
-jtruct avtab_operation {
+struct avtab_operation {
 	u8 type;
 	struct operation_perm op;
 };
