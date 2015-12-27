@@ -26,6 +26,7 @@
 #include "mdss_panel.h"
 #include "mdss_dsi.h"
 #include "mdss_debug.h"
+#include "mdss_livedisplay.h"
 
 static int mdss_dsi_regulator_init(struct platform_device *pdev)
 {
@@ -782,6 +783,9 @@ static int mdss_dsi_unblank(struct mdss_panel_data *pdata)
 				mdss_dsi_set_tear_on(ctrl_pdata);
 		}
 	}
+
+	mdss_livedisplay_update(pdata->panel_info.livedisplay,
+			MODE_UPDATE_ALL);
 
 	pr_debug("%s-:\n", __func__);
 
