@@ -2295,7 +2295,7 @@ limSendAssocReqMgmtFrame(tpAniSirGlobal   pMac,
     vos_mem_set(( tANI_U8* )&extractedExtCap, sizeof( tDot11fIEExtCap ), 0);
     if (psessionEntry->is_ext_caps_present)
     {
-    nSirStatus = limStripOffExtCapIEAndUpdateStruct(pMac, pAddIE,
+        nSirStatus = limStripOffExtCapIEAndUpdateStruct(pMac, pAddIE,
                                   &nAddIELen,
                                   &extractedExtCap );
     }
@@ -2492,7 +2492,7 @@ limSendAssocReqMgmtFrame(tpAniSirGlobal   pMac,
     }
 #endif
     if (psessionEntry->is_ext_caps_present)
-    PopulateDot11fExtCap( pMac, &pFrm->ExtCap, psessionEntry);
+        PopulateDot11fExtCap( pMac, &pFrm->ExtCap, psessionEntry);
 
 #if defined WLAN_FEATURE_VOWIFI_11R
     if (psessionEntry->pLimJoinReq->is11Rconnection)
@@ -2974,7 +2974,7 @@ limSendReassocReqWithFTIEsMgmtFrame(tpAniSirGlobal     pMac,
     }
 #endif
     if (psessionEntry->is_ext_caps_present)
-    PopulateDot11fExtCap( pMac, &frm.ExtCap, psessionEntry);
+        PopulateDot11fExtCap( pMac, &frm.ExtCap, psessionEntry);
 
     nStatus = dot11fGetPackedReAssocRequestSize( pMac, &frm, &nPayload );
     if ( DOT11F_FAILED( nStatus ) )
@@ -3447,7 +3447,7 @@ limSendReassocReqMgmtFrame(tpAniSirGlobal     pMac,
         PopulateDot11fVHTCaps( pMac, &frm.VHTCaps,
                      psessionEntry->currentOperChannel, eSIR_FALSE );
         if (psessionEntry->is_ext_caps_present)
-        PopulateDot11fExtCap( pMac, &frm.ExtCap, psessionEntry);
+            PopulateDot11fExtCap( pMac, &frm.ExtCap, psessionEntry);
     }
 #endif
 

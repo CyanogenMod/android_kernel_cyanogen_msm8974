@@ -167,7 +167,7 @@ void limTraceDump(tpAniSirGlobal pMac, tpvosTraceRecord pRecord, tANI_U16 recInd
         case TRACE_CODE_TX_MGMT:
             limLog(pMac, LOG1, "%04d %012u S%d %-14s %-30s(0x%x)",
                recIndex, pRecord->time, pRecord->session,
-                                            "TX Mgmt:", frameSubtypeStr[pRecord->data], pRecord->data );
+               "TX Mgmt:", frameSubtypeStr[pRecord->data], pRecord->data);
             break;
 
         case TRACE_CODE_RX_MGMT:
@@ -183,8 +183,8 @@ void limTraceDump(tpAniSirGlobal pMac, tpvosTraceRecord pRecord, tANI_U16 recInd
                     recIndex, pRecord->time, pRecord->session,
                     "RX Mgmt:",
                     frameSubtypeStr[LIM_TRACE_GET_SUBTYPE(pRecord->data)],
-                                            LIM_TRACE_GET_SUBTYPE(pRecord->data),
-                                            LIM_TRACE_GET_SSN(pRecord->data) );
+                    LIM_TRACE_GET_SUBTYPE(pRecord->data),
+                    LIM_TRACE_GET_SSN(pRecord->data));
             }
             break;
         case TRACE_CODE_RX_MGMT_DROP:
@@ -199,13 +199,13 @@ void limTraceDump(tpAniSirGlobal pMac, tpvosTraceRecord pRecord, tANI_U16 recInd
         case TRACE_CODE_RX_MGMT_TSF:
             limLog(pMac, LOG1, "%04d %012u S%d %-14s %-30s0x%x(%d)",
                    recIndex, pRecord->time, pRecord->session,
-                                            "RX Mgmt TSF:", " ", pRecord->data, pRecord->data );
+                   "RX Mgmt TSF:", " ", pRecord->data, pRecord->data);
             break;
 
         case TRACE_CODE_TX_COMPLETE:
             limLog(pMac, LOG1, "%04d %012u S%d %-14s  %d",
                    recIndex, pRecord->time, pRecord->session,
-                                            "TX Complete", pRecord->data );
+                   "TX Complete", pRecord->data);
             break;
 
         case TRACE_CODE_TX_SME_MSG:
@@ -270,7 +270,7 @@ void limTraceDump(tpAniSirGlobal pMac, tpvosTraceRecord pRecord, tANI_U16 recInd
                    ? "Def/Drp LIM Msg:": "RX CFG Msg:",
                    macTraceGetCfgMsgString
                    ((tANI_U16)MAC_TRACE_GET_MSG_ID(pRecord->data)),
-                                            pRecord->data );
+                   pRecord->data);
             break;
 
         case TRACE_CODE_TIMER_ACTIVATE:
@@ -298,7 +298,7 @@ void limTraceDump(tpAniSirGlobal pMac, tpvosTraceRecord pRecord, tANI_U16 recInd
         default :
             limLog(pMac, LOG1, "%04d %012u S%d %-14s(%d) (0x%x)",
                   recIndex, pRecord->time, pRecord->session,
-                                             "Unknown Code", pRecord->code, pRecord->data );
+                  "Unknown Code", pRecord->code, pRecord->data);
             break;
     }
 }
