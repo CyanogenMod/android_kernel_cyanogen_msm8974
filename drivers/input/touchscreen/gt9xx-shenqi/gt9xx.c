@@ -752,9 +752,9 @@ static void goodix_ts_work_func(struct work_struct *work)
 				}else
 				{
                 GTP_INFO("Double click to light up the screen!");
-                input_report_key(ts->input_dev, KEY_POWER, 1);
+                input_report_key(ts->input_dev, KEY_WAKEUP, 1);
                 input_sync(ts->input_dev);
-                input_report_key(ts->input_dev, KEY_POWER, 0);
+                input_report_key(ts->input_dev, KEY_WAKEUP, 0);
                 input_sync(ts->input_dev);
 				}
                 // clear 0x814B
@@ -2289,7 +2289,7 @@ static s8 gtp_request_input_dev(struct goodix_ts_data *ts)
 	input_set_capability(ts->input_dev, EV_KEY, KEY_GESTURE_LR);
 	input_set_capability(ts->input_dev, EV_KEY, KEY_GESTURE_RL);
 	input_set_capability(ts->input_dev, EV_KEY, KEY_GESTURE_DT);
-    input_set_capability(ts->input_dev, EV_KEY, KEY_POWER);
+	input_set_capability(ts->input_dev, EV_KEY, KEY_WAKEUP);
 #endif 
 
 #if GTP_CHANGE_X2Y
