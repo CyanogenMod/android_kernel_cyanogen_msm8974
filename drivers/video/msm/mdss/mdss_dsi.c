@@ -710,7 +710,6 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 		pdata->panel_info.panel_power_on = 0;
 		return ret;
 	}
-	pdata->panel_info.panel_power_on = 1;
 
 	mdss_dsi_phy_sw_reset((ctrl_pdata->ctrl_base));
 	mdss_dsi_phy_init(pdata);
@@ -744,6 +743,7 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 	if (pdata->panel_info.type == MIPI_CMD_PANEL)
 		mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 0);
 
+	pdata->panel_info.panel_power_on = 1;
 	pr_debug("%s-:\n", __func__);
 	return 0;
 }
