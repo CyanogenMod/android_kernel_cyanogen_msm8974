@@ -637,7 +637,7 @@ static int __devinit fpc1020_probe(struct spi_device *spi)
     fpc1020->irq_gpio = -EINVAL;
     fpc1020->irq = -EINVAL;
     fpc1020->cs_gpio = -EINVAL;
-    fpc1020->wakeup_status = 0;  //Default disable IRQ wakeup
+    fpc1020->wakeup_status = 1;  //Default enable IRQ wakeup
     fpc1020->irq_status = 0;    //Default disable IRQ
 
     fpc1020_pdata = spi->dev.platform_data;
