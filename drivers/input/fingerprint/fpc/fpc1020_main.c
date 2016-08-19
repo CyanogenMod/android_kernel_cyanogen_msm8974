@@ -102,7 +102,7 @@ static ssize_t fpc1020_show_attr_setup(struct device *dev,
     if (fpc_attr->offset == offsetof(fpc1020_setup_t, enable_navi))
         val = spi_clk_access_cnt;
     if (fpc_attr->offset == offsetof(fpc1020_setup_t, wakeup))
-        val = fpc1020->wakeup_status;
+	val = fpc1020->wakeup;
     if (fpc_attr->offset == offsetof(fpc1020_setup_t, irq))
         val = fpc1020->irq_status;
     if (val >= 0)
@@ -136,17 +136,27 @@ static ssize_t fpc1020_store_attr_setup(struct device *dev, struct device_attrib
             if (val == 0 && fpc1020->irq_status == 1) {
                 dev_info(&fpc1020->spi->dev, "IRQ disable\n");
                 disable_irq(fpc1020->irq);
+		if (fpc1020->wakeup)
+			disable_irq_wake(fpc1020->irq);
                 fpc1020->irq_status = 0;
             } else if (val == 1 && fpc1020->irq_status == 0) {
                 dev_info(&fpc1020->spi->dev, "IRQ enable\n");
                 enable_irq(fpc1020->irq);
+		if (fpc1020->wakeup)
+			enable_irq_wake(fpc1020->irq);
                 fpc1020->irq_status = 1;
             }
         } else if (fpc_attr->offset == offsetof(fpc1020_setup_t, wakeup)) {
             dev_info(&fpc1020->spi->dev, "Modify wakeup status(%d)\n", (int)val);
-            if (val != fpc1020->wakeup_status) {
-                fpc1020->wakeup_status = (int)val;
-                (fpc1020->wakeup_status == 1) ? enable_irq_wake(fpc1020->irq) : disable_irq_wake(fpc1020->irq);
+		if (!!val != fpc1020->wakeup) {
+			/* update irq wake status if irq already enabled */
+			if (fpc1020->irq_status) {
+				if (val)
+					enable_irq_wake(fpc1020->irq);
+				else
+					disable_irq_wake(fpc1020->irq);
+			}
+			fpc1020->wakeup = !!val;
             }
         } else
             return -ENOENT;
@@ -596,12 +606,14 @@ static unsigned int fpc1020_poll(struct file *file, poll_table *wait)
 	fpc1020_data_t *fpc1020 = file->private_data;
     poll_wait(file, &fnger_detect_wq, wait);
     if (irq_flag == true) {
-	if (fpc1020->report_key_flag == false && fpc1020->wakeup_status == 0) {
-	    dev_info(&fpc1020->spi->dev, "%s, ScreenOff&WakeupDisable\n", __func__);
-	    mask = POLLNVAL;
+	if (fpc1020->report_key_flag == false &&
+		fpc1020->wakeup == 0) {
+		dev_info(&fpc1020->spi->dev, "%s, ScreenOff&WakeupDisable\n",
+			__func__);
+		mask = POLLNVAL;
 	} else {
-	    dev_warn(&fpc1020->spi->dev, "%s, FNGR_DETECT\n", __func__);
-	    mask = POLLIN|POLLRDNORM;
+		dev_warn(&fpc1020->spi->dev, "%s, FNGR_DETECT\n", __func__);
+		mask = POLLIN|POLLRDNORM;
 	}
 	irq_flag = false;
     }
@@ -637,7 +649,7 @@ static int __devinit fpc1020_probe(struct spi_device *spi)
     fpc1020->irq_gpio = -EINVAL;
     fpc1020->irq = -EINVAL;
     fpc1020->cs_gpio = -EINVAL;
-    fpc1020->wakeup_status = 1;  //Default enable IRQ wakeup
+	fpc1020->wakeup = 1;  /* Default enable IRQ wakeupa */
     fpc1020->irq_status = 0;    //Default disable IRQ
 
     fpc1020_pdata = spi->dev.platform_data;
@@ -730,10 +742,6 @@ static int __devinit fpc1020_probe(struct spi_device *spi)
         goto err;
     }
 
-    if (fpc1020->wakeup_status) {
-	enable_irq_wake(fpc1020->irq);
-    }
-
     return 0;
 
 err:
@@ -760,12 +768,6 @@ static int fpc1020_suspend(struct device *dev)
         spi_clk_access_cnt = 0;
         clk_disable_unprepare(fpc1020->core_clk);
         clk_disable_unprepare(fpc1020->iface_clk);
-    }
-    if (fpc1020->wakeup_status == 1) {
-        dev_info(&fpc1020->spi->dev, "Enable fingerIRQ wakeup!\n");
-        //if (fpc1020->irq_status == 0) {
-        //    enable_irq(fpc1020->irq);
-        //}
     }
 
     return 0;
