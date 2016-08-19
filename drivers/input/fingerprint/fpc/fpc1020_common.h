@@ -320,7 +320,7 @@ typedef struct {
     struct work_struct input_report_work;
     struct workqueue_struct *fpc1020_wq;
     int report_key;
-    u8 wakeup_status;
+	u8 wakeup;
 	bool down;
 #endif
 
